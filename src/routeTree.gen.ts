@@ -13,6 +13,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as MarketsRouteImport } from './routes/markets'
 import { Route as PortfolioRouteImport } from './routes/portfolio'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as TradeRouteImport } from './routes/trade'
+import { Route as CoinCoinIdRouteImport } from './routes/coin.$coinId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -34,18 +36,32 @@ const ProfileRoute = ProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TradeRoute = TradeRouteImport.update({
+  id: '/trade',
+  path: '/trade',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CoinCoinIdRoute = CoinCoinIdRouteImport.update({
+  id: '/coin/$coinId',
+  path: '/coin/$coinId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/markets': typeof MarketsRoute
   '/portfolio': typeof PortfolioRoute
   '/profile': typeof ProfileRoute
+  '/trade': typeof TradeRoute
+  '/coin/$coinId': typeof CoinCoinIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/markets': typeof MarketsRoute
   '/portfolio': typeof PortfolioRoute
   '/profile': typeof ProfileRoute
+  '/trade': typeof TradeRoute
+  '/coin/$coinId': typeof CoinCoinIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -53,13 +69,23 @@ export interface FileRoutesById {
   '/markets': typeof MarketsRoute
   '/portfolio': typeof PortfolioRoute
   '/profile': typeof ProfileRoute
+  '/trade': typeof TradeRoute
+  '/coin/$coinId': typeof CoinCoinIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/markets' | '/portfolio' | '/profile'
+  fullPaths:
+    '/' | '/markets' | '/portfolio' | '/profile' | '/trade' | '/coin/$coinId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/markets' | '/portfolio' | '/profile'
-  id: '__root__' | '/' | '/markets' | '/portfolio' | '/profile'
+  to: '/' | '/markets' | '/portfolio' | '/profile' | '/trade' | '/coin/$coinId'
+  id:
+    | '__root__'
+    | '/'
+    | '/markets'
+    | '/portfolio'
+    | '/profile'
+    | '/trade'
+    | '/coin/$coinId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -67,6 +93,8 @@ export interface RootRouteChildren {
   MarketsRoute: typeof MarketsRoute
   PortfolioRoute: typeof PortfolioRoute
   ProfileRoute: typeof ProfileRoute
+  TradeRoute: typeof TradeRoute
+  CoinCoinIdRoute: typeof CoinCoinIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -99,6 +127,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/trade': {
+      id: '/trade'
+      path: '/trade'
+      fullPath: '/trade'
+      preLoaderRoute: typeof TradeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/coin/$coinId': {
+      id: '/coin/$coinId'
+      path: '/coin/$coinId'
+      fullPath: '/coin/$coinId'
+      preLoaderRoute: typeof CoinCoinIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -107,6 +149,8 @@ const rootRouteChildren: RootRouteChildren = {
   MarketsRoute: MarketsRoute,
   PortfolioRoute: PortfolioRoute,
   ProfileRoute: ProfileRoute,
+  TradeRoute: TradeRoute,
+  CoinCoinIdRoute: CoinCoinIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
