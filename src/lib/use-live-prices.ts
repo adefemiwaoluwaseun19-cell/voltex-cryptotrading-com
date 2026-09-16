@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo } from "react";
 import { getLiveQuotes, getPriceHistory, type LiveQuotes } from "@/lib/prices.functions";
-import { coins, type Coin } from "@/lib/market-data";
+import { coins, holdingIds, type Coin } from "@/lib/market-data";
 
 export function useLiveQuotes() {
   const fetchQuotes = useServerFn(getLiveQuotes);
@@ -46,4 +46,23 @@ export function usePriceHistory(coinId: string, range: string, enabled = true) {
     refetchInterval: 60_000,
     staleTime: 30_000,
   });
+}
+
+/** Portfolio rows and totals derived from live prices. */
+export function useLivePortfolio() {
+  const { coins: liveCoins, isLive, isFetching, isError } = useLiveCoins();
+
+  return useMemo(() => {
+    const rows = liveCoins
+      .filter((c) => holdingIds.includes(c.id))
+      .map((c) => ({ ...c, value: c.holding * c.price }))
+      .sort((a, b) => b.value - a.value);
+
+    const total = rows.reduce((sum, r) => sum + r.value, 0);
+    const prev = rows.reduce((sum, r) => sum + r.value / (1 + r.change / 100), 0);
+    const changeAbs = total - prev;
+    const changePct = prev > 0 ? (changeAbs / prev) * 100 : 0;
+
+    return { rows, total, changeAbs, changePct, isLive, isFetching, isError };
+  }, [liveCoins, isLive, isFetching, isError]);
 }
