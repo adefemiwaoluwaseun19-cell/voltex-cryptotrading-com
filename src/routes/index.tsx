@@ -3,16 +3,8 @@ import { AppShell } from "@/components/AppShell";
 import { AppHeader } from "@/components/AppHeader";
 import { CoinBadge } from "@/components/CoinBadge";
 import { Sparkline } from "@/components/Sparkline";
-import {
-  coins,
-  formatPct,
-  formatUsd,
-  holdings,
-  portfolioChange,
-  portfolioChangeAbs,
-  portfolioValue,
-  sparkline,
-} from "@/lib/market-data";
+import { formatPct, formatUsd, sparkline } from "@/lib/market-data";
+import { useLiveCoins, useLivePortfolio, usePriceHistory } from "@/lib/use-live-prices";
 
 export const Route = createFileRoute("/")({
   head: () => ({
