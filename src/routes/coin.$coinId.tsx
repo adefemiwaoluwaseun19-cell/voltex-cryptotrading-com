@@ -5,6 +5,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { CoinBadge } from "@/components/CoinBadge";
 import { Sparkline } from "@/components/Sparkline";
 import { formatPct, formatUsd, getCoin, sparkline } from "@/lib/market-data";
+import { useLiveCoin, usePriceHistory } from "@/lib/use-live-prices";
 
 export const Route = createFileRoute("/coin/$coinId")({
   loader: ({ params }) => {
@@ -36,10 +37,16 @@ export const Route = createFileRoute("/coin/$coinId")({
 const ranges = ["1H", "1D", "1W", "1M", "1Y"] as const;
 
 function CoinPage() {
-  const { coin } = Route.useLoaderData();
+  const { coin: staticCoin } = Route.useLoaderData();
   const [range, setRange] = useState<(typeof ranges)[number]>("1D");
+  const { coin: liveCoin, isLive } = useLiveCoin(staticCoin.id);
+  const coin = liveCoin ?? staticCoin;
   const up = coin.change >= 0;
-  const series = sparkline(coin.id + range, 60, up);
+  const history = usePriceHistory(coin.id, range);
+  const series =
+    history.data && history.data.length > 1
+      ? history.data
+      : sparkline(coin.id + range, 60, up);
 
   return (
     <AppShell>
@@ -50,7 +57,10 @@ function CoinPage() {
           <CoinBadge glyph={coin.glyph} swatch={coin.swatch} className="size-11 text-base" />
           <div>
             <h1 className="font-display text-xl font-semibold leading-tight">{coin.name}</h1>
-            <p className="text-xs text-muted-foreground">{coin.symbol} / USD · Spot</p>
+            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span className={`size-1.5 rounded-full ${isLive ? "animate-pulse bg-up" : "bg-muted-foreground"}`} />
+              {coin.symbol} / USD · {isLive ? "Live" : "Loading…"}
+            </p>
           </div>
         </div>
         <p className="num mt-4 font-display text-4xl font-semibold tracking-tight">

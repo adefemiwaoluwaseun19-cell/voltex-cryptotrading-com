@@ -131,9 +131,9 @@ export const coins: Coin[] = [
 
 export const getCoin = (id: string) => coins.find((c) => c.id === id);
 
-export const holdings = coins.filter((c) =>
-  ["eth", "sol", "avax", "btc", "link"].includes(c.id),
-);
+export const holdingIds = ["eth", "sol", "avax", "btc", "link"];
+
+export const holdings = coins.filter((c) => holdingIds.includes(c.id));
 
 export const portfolioValue = holdings.reduce((sum, c) => sum + c.holding * c.price, 0);
 

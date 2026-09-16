@@ -4,7 +4,8 @@ import { AppShell } from "@/components/AppShell";
 import { AppHeader } from "@/components/AppHeader";
 import { CoinBadge } from "@/components/CoinBadge";
 import { Sparkline } from "@/components/Sparkline";
-import { coins, formatPct, formatUsd, sparkline } from "@/lib/market-data";
+import { formatPct, formatUsd, sparkline } from "@/lib/market-data";
+import { useLiveCoins } from "@/lib/use-live-prices";
 
 export const Route = createFileRoute("/markets")({
   head: () => ({
@@ -30,6 +31,7 @@ const filters = ["All", "Gainers", "Losers", "Holdings"] as const;
 function MarketsPage() {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<(typeof filters)[number]>("All");
+  const { coins, isLive, isError } = useLiveCoins();
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -41,7 +43,7 @@ function MarketsPage() {
         if (filter === "Holdings") return c.holding > 0;
         return true;
       });
-  }, [query, filter]);
+  }, [coins, query, filter]);
 
   return (
     <AppShell>
@@ -49,7 +51,12 @@ function MarketsPage() {
 
       <div className="mt-5 px-5">
         <h1 className="font-display text-2xl font-semibold tracking-tight">Markets</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Live spot prices across USD pairs.</p>
+        <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
+          <span
+            className={`size-1.5 rounded-full ${isError ? "bg-down" : isLive ? "animate-pulse bg-up" : "bg-muted-foreground"}`}
+          />
+          {isError ? "Live feed unavailable" : isLive ? "Live spot prices · USD" : "Loading live prices…"}
+        </p>
       </div>
 
       <div className="mt-4 px-5">
