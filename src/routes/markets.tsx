@@ -4,7 +4,8 @@ import { AppShell } from "@/components/AppShell";
 import { AppHeader } from "@/components/AppHeader";
 import { CoinBadge } from "@/components/CoinBadge";
 import { Sparkline } from "@/components/Sparkline";
-import { coins, formatPct, formatUsd, sparkline } from "@/lib/market-data";
+import { formatPct, formatUsd, sparkline } from "@/lib/market-data";
+import { useLiveCoins } from "@/lib/use-live-prices";
 
 export const Route = createFileRoute("/markets")({
   head: () => ({
@@ -30,6 +31,7 @@ const filters = ["All", "Gainers", "Losers", "Holdings"] as const;
 function MarketsPage() {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<(typeof filters)[number]>("All");
+  const { coins, isLive, isError } = useLiveCoins();
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
