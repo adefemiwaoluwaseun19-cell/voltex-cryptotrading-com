@@ -5,6 +5,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { CoinBadge } from "@/components/CoinBadge";
 import { Sparkline } from "@/components/Sparkline";
 import { formatPct, formatUsd, getCoin, sparkline } from "@/lib/market-data";
+import { useLiveCoin, usePriceHistory } from "@/lib/use-live-prices";
 
 export const Route = createFileRoute("/coin/$coinId")({
   loader: ({ params }) => {
@@ -36,10 +37,16 @@ export const Route = createFileRoute("/coin/$coinId")({
 const ranges = ["1H", "1D", "1W", "1M", "1Y"] as const;
 
 function CoinPage() {
-  const { coin } = Route.useLoaderData();
+  const { coin: staticCoin } = Route.useLoaderData();
   const [range, setRange] = useState<(typeof ranges)[number]>("1D");
+  const { coin: liveCoin, isLive } = useLiveCoin(staticCoin.id);
+  const coin = liveCoin ?? staticCoin;
   const up = coin.change >= 0;
-  const series = sparkline(coin.id + range, 60, up);
+  const history = usePriceHistory(coin.id, range);
+  const series =
+    history.data && history.data.length > 1
+      ? history.data
+      : sparkline(coin.id + range, 60, up);
 
   return (
     <AppShell>
