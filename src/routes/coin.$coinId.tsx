@@ -57,7 +57,10 @@ function CoinPage() {
           <CoinBadge glyph={coin.glyph} swatch={coin.swatch} className="size-11 text-base" />
           <div>
             <h1 className="font-display text-xl font-semibold leading-tight">{coin.name}</h1>
-            <p className="text-xs text-muted-foreground">{coin.symbol} / USD · Spot</p>
+            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span className={`size-1.5 rounded-full ${isLive ? "animate-pulse bg-up" : "bg-muted-foreground"}`} />
+              {coin.symbol} / USD · {isLive ? "Live" : "Loading…"}
+            </p>
           </div>
         </div>
         <p className="num mt-4 font-display text-4xl font-semibold tracking-tight">
