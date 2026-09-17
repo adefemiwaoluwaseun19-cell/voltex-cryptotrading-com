@@ -137,7 +137,7 @@ function Index() {
           </Link>
         </div>
         <div className="space-y-2">
-          {holdings.slice(0, 3).map((coin) => (
+          {rows.slice(0, 3).map((coin) => (
             <Link
               key={coin.id}
               to="/coin/$coinId"
