@@ -111,7 +111,9 @@ function Index() {
             </div>
             <div className="text-right">
               <p className="num text-sm font-semibold leading-none">{formatUsd(featured.price)}</p>
-              <p className="num mt-1 text-[11px] text-up">{formatPct(featured.change)}</p>
+              <p className={`num mt-1 text-[11px] ${featured.change >= 0 ? "text-up" : "text-down"}`}>
+                {formatPct(featured.change)}
+              </p>
             </div>
           </div>
           <div className="mt-3 h-14">
