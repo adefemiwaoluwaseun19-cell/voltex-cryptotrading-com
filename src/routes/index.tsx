@@ -44,12 +44,16 @@ function Index() {
               Total balance
             </h1>
             <p className="num mt-1 font-display text-4xl font-semibold tracking-tight">
-              {formatUsd(portfolioValue)}
+              {formatUsd(total)}
             </p>
           </div>
-          <span className="num mb-1 inline-flex items-center gap-1 rounded-full bg-up/15 px-2.5 py-1 text-xs font-semibold text-up">
-            <span className="text-[10px]">▲</span> +{formatUsd(portfolioChangeAbs)} (
-            {portfolioChange.toFixed(2)}%)
+          <span
+            className={`num mb-1 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
+              changeAbs >= 0 ? "bg-up/15 text-up" : "bg-down/15 text-down"
+            }`}
+          >
+            <span className="text-[10px]">{changeAbs >= 0 ? "▲" : "▼"}</span>{" "}
+            {formatUsd(Math.abs(changeAbs))} ({formatPct(changePct)})
           </span>
         </div>
       </section>
