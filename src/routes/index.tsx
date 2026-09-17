@@ -26,8 +26,11 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const { coins } = useLiveCoins();
+  const { rows, total, changeAbs, changePct } = useLivePortfolio();
   const featured = coins[0]!;
-  const series = sparkline(featured.id, 40, featured.change > 0);
+  const { data: history } = usePriceHistory(featured.id, "1D");
+  const series = history?.length ? history : sparkline(featured.id, 40, featured.change > 0);
 
   return (
     <AppShell>
