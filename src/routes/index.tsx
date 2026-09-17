@@ -26,8 +26,11 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const { coins } = useLiveCoins();
+  const { rows, total, changeAbs, changePct } = useLivePortfolio();
   const featured = coins[0]!;
-  const series = sparkline(featured.id, 40, featured.change > 0);
+  const { data: history } = usePriceHistory(featured.id, "1D");
+  const series = history?.length ? history : sparkline(featured.id, 40, featured.change > 0);
 
   return (
     <AppShell>
@@ -41,12 +44,16 @@ function Index() {
               Total balance
             </h1>
             <p className="num mt-1 font-display text-4xl font-semibold tracking-tight">
-              {formatUsd(portfolioValue)}
+              {formatUsd(total)}
             </p>
           </div>
-          <span className="num mb-1 inline-flex items-center gap-1 rounded-full bg-up/15 px-2.5 py-1 text-xs font-semibold text-up">
-            <span className="text-[10px]">▲</span> +{formatUsd(portfolioChangeAbs)} (
-            {portfolioChange.toFixed(2)}%)
+          <span
+            className={`num mb-1 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
+              changeAbs >= 0 ? "bg-up/15 text-up" : "bg-down/15 text-down"
+            }`}
+          >
+            <span className="text-[10px]">{changeAbs >= 0 ? "▲" : "▼"}</span>{" "}
+            {formatUsd(Math.abs(changeAbs))} ({formatPct(changePct)})
           </span>
         </div>
       </section>
@@ -104,7 +111,9 @@ function Index() {
             </div>
             <div className="text-right">
               <p className="num text-sm font-semibold leading-none">{formatUsd(featured.price)}</p>
-              <p className="num mt-1 text-[11px] text-up">{formatPct(featured.change)}</p>
+              <p className={`num mt-1 text-[11px] ${featured.change >= 0 ? "text-up" : "text-down"}`}>
+                {formatPct(featured.change)}
+              </p>
             </div>
           </div>
           <div className="mt-3 h-14">
@@ -128,7 +137,7 @@ function Index() {
           </Link>
         </div>
         <div className="space-y-2">
-          {holdings.slice(0, 3).map((coin) => (
+          {rows.slice(0, 3).map((coin) => (
             <Link
               key={coin.id}
               to="/coin/$coinId"
