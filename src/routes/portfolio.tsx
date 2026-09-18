@@ -55,7 +55,7 @@ function PortfolioPage() {
           {rows.map((c, i) => (
             <div
               key={c.id}
-              className={`bg-gradient-to-r ${c.swatch}`}
+              className={`allocation-segment bg-gradient-to-r ${c.swatch}`}
               style={{ width: `${(c.value / portfolioValue) * 100}%`, opacity: 1 - i * 0.08 }}
             />
           ))}
@@ -75,13 +75,13 @@ function PortfolioPage() {
 
       <section className="mt-5 px-5">
         <h2 className="mb-3 font-display text-base font-semibold">Holdings</h2>
-        <div className="space-y-2">
+        <div className="stagger-list space-y-2">
           {rows.map((coin) => (
             <Link
               key={coin.id}
               to="/coin/$coinId"
               params={{ coinId: coin.id }}
-              className="flex items-center justify-between rounded-xl border border-border bg-surface px-3 py-3"
+              className="market-row flex items-center justify-between rounded-lg border border-border bg-surface px-3 py-3"
             >
               <div className="flex items-center gap-3">
                 <CoinBadge glyph={coin.glyph} swatch={coin.swatch} />
@@ -105,7 +105,7 @@ function PortfolioPage() {
 
       <section className="mt-5 px-5">
         <h2 className="mb-3 font-display text-base font-semibold">Recent activity</h2>
-        <div className="divide-y divide-border rounded-xl border border-border bg-surface px-3">
+        <div className="stagger-list divide-y divide-border rounded-lg border border-border bg-surface px-3">
           {activity.map((item) => (
             <div key={item.id} className="flex items-center gap-3 py-3">
               <div

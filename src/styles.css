@@ -72,6 +72,8 @@
   --gradient-brand: linear-gradient(90deg, var(--brand), var(--accent));
   --gradient-rail: linear-gradient(90deg, var(--brand), var(--accent), oklch(0.72 0.17 300));
   --gradient-card: linear-gradient(180deg, oklch(1 0 0 / 7%), transparent);
+  --shadow-brand: 0 8px 28px oklch(0.585 0.212 277 / 28%);
+  --shadow-coin: 0 5px 16px oklch(0 0 0 / 22%);
 }
 
 .dark {
@@ -105,6 +107,133 @@
 
 @utility num {
   font-variant-numeric: tabular-nums;
+}
+
+@utility shadow-brand {
+  box-shadow: var(--shadow-brand);
+}
+
+@utility shadow-coin {
+  box-shadow: var(--shadow-coin);
+}
+
+.app-grid {
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: linear-gradient(to bottom, oklch(0 0 0 / 35%), transparent);
+  opacity: 0.18;
+}
+
+.pressable,
+.market-row,
+.action-button {
+  transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+}
+
+.pressable:active,
+.market-row:active,
+.action-button:active {
+  transform: scale(0.975);
+}
+
+.market-row:hover {
+  border-color: color-mix(in oklch, var(--brand) 45%, var(--border));
+  background-color: color-mix(in oklch, var(--surface) 75%, var(--brand) 8%);
+}
+
+.market-row:hover .coin-badge {
+  transform: translateY(-2px) scale(1.04);
+}
+
+.nav-link::before {
+  content: "";
+  position: absolute;
+  top: -9px;
+  width: 26px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--brand);
+  opacity: 0;
+  transform: scaleX(0);
+  transition: opacity 200ms ease, transform 240ms ease;
+}
+
+.nav-link[aria-current="page"]::before {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+.nav-link[aria-current="page"] .nav-icon {
+  animation: nav-pop 300ms cubic-bezier(.2,.8,.2,1);
+}
+
+.chart-line {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: chart-draw 800ms cubic-bezier(.2,.8,.2,1) forwards;
+}
+
+.stagger-list > * {
+  opacity: 0;
+  animation: row-enter 420ms cubic-bezier(.2,.8,.2,1) forwards;
+}
+
+.stagger-list > *:nth-child(1) { animation-delay: 40ms; }
+.stagger-list > *:nth-child(2) { animation-delay: 80ms; }
+.stagger-list > *:nth-child(3) { animation-delay: 120ms; }
+.stagger-list > *:nth-child(4) { animation-delay: 160ms; }
+.stagger-list > *:nth-child(5) { animation-delay: 200ms; }
+.stagger-list > *:nth-child(6) { animation-delay: 240ms; }
+.stagger-list > *:nth-child(7) { animation-delay: 280ms; }
+.stagger-list > *:nth-child(8) { animation-delay: 320ms; }
+
+.allocation-segment {
+  transform-origin: left;
+  animation: allocation-grow 700ms cubic-bezier(.2,.8,.2,1) both;
+}
+
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes row-enter {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes chart-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes allocation-grow {
+  from { transform: scaleX(0); opacity: 0; }
+  to { transform: scaleX(1); opacity: 1; }
+}
+
+@keyframes nav-pop {
+  0% { transform: scale(.82); }
+  60% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
+@keyframes logo-breathe {
+  0%, 100% { box-shadow: 0 6px 20px oklch(0.585 0.212 277 / 20%); }
+  50% { box-shadow: 0 8px 30px oklch(0.585 0.212 277 / 40%); }
+}
+
+.page-enter { animation: page-enter 360ms cubic-bezier(.2,.8,.2,1) both; }
+.logo-pulse { animation: logo-breathe 3.2s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 @keyframes spin360 {

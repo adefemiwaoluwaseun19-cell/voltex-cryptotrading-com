@@ -43,7 +43,7 @@ function ProfilePage() {
       <AppHeader title="Profile" />
 
       <section className="mt-5 px-5">
-        <div className="flex items-center gap-3 rounded-2xl border border-border bg-gradient-card p-4">
+        <div className="animate-fade-in flex items-center gap-3 rounded-lg border border-border bg-gradient-card p-4">
           <div className="grid size-14 place-items-center rounded-full bg-gradient-to-br from-violet-500 to-accent text-base font-semibold ring-2 ring-border">
             JD
           </div>
@@ -57,11 +57,11 @@ function ProfilePage() {
         </div>
 
         <div className="mt-3 grid grid-cols-2 gap-2">
-          <div className="rounded-xl border border-border bg-surface p-3">
+           <div className="rounded-lg border border-border bg-surface p-3">
             <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground">Balance</p>
             <p className="num mt-1 text-sm font-semibold">{formatUsd(portfolioValue)}</p>
           </div>
-          <div className="rounded-xl border border-border bg-surface p-3">
+           <div className="rounded-lg border border-border bg-surface p-3">
             <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground">Daily limit</p>
             <p className="num mt-1 text-sm font-semibold">$100,000.00</p>
           </div>
@@ -71,12 +71,12 @@ function ProfilePage() {
       {groups.map((group) => (
         <section key={group.title} className="mt-5 px-5">
           <h2 className="mb-3 font-display text-base font-semibold">{group.title}</h2>
-          <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface">
+          <div className="stagger-list divide-y divide-border overflow-hidden rounded-lg border border-border bg-surface">
             {group.rows.map((row) => (
               <button
                 key={row}
                 type="button"
-                className="flex w-full items-center justify-between px-3 py-3.5 text-left text-sm font-medium"
+                className="pressable flex w-full items-center justify-between px-3 py-3.5 text-left text-sm font-medium transition-colors hover:bg-secondary"
               >
                 {row}
                 <span className="text-muted-foreground">›</span>

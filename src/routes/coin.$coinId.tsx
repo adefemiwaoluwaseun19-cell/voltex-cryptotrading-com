@@ -77,8 +77,8 @@ function CoinPage() {
             key={r}
             type="button"
             onClick={() => setRange(r)}
-            className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${
-              range === r ? "bg-brand text-brand-foreground" : "bg-secondary text-muted-foreground"
+            className={`pressable rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
+              range === r ? "bg-brand text-brand-foreground shadow-brand" : "bg-secondary text-muted-foreground"
             }`}
           >
             {r}
@@ -87,7 +87,7 @@ function CoinPage() {
       </div>
 
       <div className="mt-3 px-5">
-        <div className="h-44 rounded-2xl border border-border bg-gradient-card p-2">
+        <div className="h-44 overflow-hidden rounded-lg border border-border bg-gradient-card p-2">
           <Sparkline id={`detail-${coin.id}-${range}`} values={series} up={up} area className="h-full w-full" />
         </div>
       </div>
@@ -98,7 +98,7 @@ function CoinPage() {
           { label: "24h volume", value: coin.volume },
           { label: "Supply", value: coin.supply },
         ].map((stat) => (
-          <div key={stat.label} className="rounded-xl border border-border bg-surface p-3">
+          <div key={stat.label} className="animate-fade-in rounded-lg border border-border bg-surface p-3">
             <p className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{stat.label}</p>
             <p className="num mt-1 text-xs font-semibold">{stat.value}</p>
           </div>
@@ -106,7 +106,7 @@ function CoinPage() {
       </section>
 
       <section className="mt-4 px-5">
-        <div className="rounded-xl border border-border bg-surface p-4">
+        <div className="rounded-lg border border-border bg-surface p-4">
           <h2 className="font-display text-sm font-semibold">Your position</h2>
           <div className="mt-2 flex items-end justify-between">
             <p className="num text-lg font-semibold">{formatUsd(coin.holding * coin.price)}</p>
@@ -122,14 +122,14 @@ function CoinPage() {
         <Link
           to="/trade"
           search={{ coin: coin.id, side: "sell" }}
-          className="flex h-12 items-center justify-center rounded-xl bg-secondary text-sm font-bold text-secondary-foreground"
+          className="action-button flex h-12 items-center justify-center rounded-md bg-secondary text-sm font-bold text-secondary-foreground"
         >
           Sell
         </Link>
         <Link
           to="/trade"
           search={{ coin: coin.id, side: "buy" }}
-          className="flex h-12 items-center justify-center rounded-xl bg-gradient-brand text-sm font-bold text-primary-foreground"
+          className="action-button flex h-12 items-center justify-center rounded-md bg-gradient-brand text-sm font-bold text-primary-foreground shadow-brand"
         >
           Buy {coin.symbol}
         </Link>

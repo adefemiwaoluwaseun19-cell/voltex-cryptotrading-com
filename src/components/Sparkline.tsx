@@ -33,7 +33,7 @@ export function Sparkline({ values, up, className, area = false, id }: Props) {
           <path d={`${line} L${w},${h} L0,${h} Z`} fill={`url(#fill-${id})`} />
         </>
       )}
-      <path d={line} fill="none" stroke={stroke} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+      <path className="chart-line" d={line} fill="none" stroke={stroke} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" pathLength="1" />
     </svg>
   );
 }
