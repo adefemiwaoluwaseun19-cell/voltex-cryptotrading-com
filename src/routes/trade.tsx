@@ -57,12 +57,12 @@ function TradePage() {
         <p className="mt-1 text-sm text-muted-foreground">Market order · settles instantly</p>
       </div>
 
-      <div className="mt-4 flex gap-2 px-5">
+      <div className="mt-4 grid grid-cols-2 gap-1 rounded-lg bg-secondary p-1 mx-5">
         <button
           type="button"
           onClick={() => setSide("buy")}
-          className={`flex-1 rounded-full py-2.5 text-sm font-semibold ${
-            side === "buy" ? "bg-brand text-brand-foreground" : "bg-secondary text-secondary-foreground"
+          className={`pressable rounded-md py-2.5 text-sm font-semibold transition-all ${
+            side === "buy" ? "bg-brand text-brand-foreground shadow-brand" : "text-muted-foreground"
           }`}
         >
           Buy
@@ -70,8 +70,8 @@ function TradePage() {
         <button
           type="button"
           onClick={() => setSide("sell")}
-          className={`flex-1 rounded-full py-2.5 text-sm font-semibold ${
-            side === "sell" ? "bg-brand text-brand-foreground" : "bg-secondary text-secondary-foreground"
+          className={`pressable rounded-md py-2.5 text-sm font-semibold transition-all ${
+            side === "sell" ? "bg-brand text-brand-foreground shadow-brand" : "text-muted-foreground"
           }`}
         >
           Sell
@@ -84,7 +84,7 @@ function TradePage() {
             key={c.id}
             type="button"
             onClick={() => navigate({ search: { coin: c.id, side }, replace: true })}
-            className={`flex shrink-0 items-center gap-2 rounded-full border px-3 py-2 text-sm font-semibold ${
+            className={`pressable flex shrink-0 items-center gap-2 rounded-md border px-3 py-2 text-sm font-semibold ${
               c.id === coin.id ? "border-accent bg-accent/10 text-accent" : "border-border bg-secondary"
             }`}
           >
@@ -95,7 +95,7 @@ function TradePage() {
       </div>
 
       <section className="mt-4 px-5">
-        <div className="rounded-2xl border border-border bg-gradient-card p-4">
+        <div className="rounded-lg border border-border bg-gradient-card p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <CoinBadge glyph={coin.glyph} swatch={coin.swatch} className="size-7 text-[11px]" />
@@ -132,7 +132,7 @@ function TradePage() {
                 key={amount}
                 type="button"
                 onClick={() => setSpend(String(amount))}
-                className="num flex-1 rounded-lg bg-secondary py-2 text-xs font-semibold text-secondary-foreground"
+                className="pressable num flex-1 rounded-md bg-secondary py-2 text-xs font-semibold text-secondary-foreground"
               >
                 ${amount}
               </button>
@@ -166,13 +166,13 @@ function TradePage() {
                 `${side === "buy" ? "Bought" : "Sold"} ${units.toFixed(units < 1 ? 6 : 4)} ${coin.symbol} for ${formatUsd(usd)}`,
               )
             }
-            className="mt-4 h-12 w-full rounded-xl bg-gradient-brand text-sm font-bold text-primary-foreground active:scale-[0.99] disabled:opacity-40"
+            className="action-button mt-4 h-12 w-full rounded-md bg-gradient-brand text-sm font-bold text-primary-foreground shadow-brand disabled:opacity-40"
           >
             {side === "buy" ? "Confirm buy" : "Confirm sell"}
           </button>
 
           {placed && (
-            <p className="mt-3 rounded-lg bg-up/15 px-3 py-2 text-center text-xs font-semibold text-up">
+            <p className="animate-scale-in mt-3 rounded-md bg-up/15 px-3 py-2 text-center text-xs font-semibold text-up">
               {placed}
             </p>
           )}

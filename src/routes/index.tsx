@@ -36,7 +36,7 @@ function Index() {
     <AppShell>
       <AppHeader />
 
-      <section className="mt-5 px-5">
+      <section className="animate-fade-in mt-5 px-5">
         <p className="text-sm text-muted-foreground">Welcome back, Jordan</p>
         <div className="mt-1 flex items-end justify-between">
           <div>
@@ -79,28 +79,28 @@ function Index() {
         <Link
           to="/trade"
           search={{ coin: "btc", side: "buy" }}
-          className="rounded-full bg-brand px-3.5 py-2 text-sm font-semibold text-brand-foreground"
+          className="action-button rounded-md bg-brand px-3.5 py-2 text-sm font-semibold text-brand-foreground shadow-brand"
         >
           Buy
         </Link>
         <Link
           to="/trade"
           search={{ coin: "btc", side: "sell" }}
-          className="rounded-full bg-secondary px-3.5 py-2 text-sm font-semibold text-secondary-foreground"
+          className="action-button rounded-md bg-secondary px-3.5 py-2 text-sm font-semibold text-secondary-foreground"
         >
           Sell
         </Link>
         <Link
           to="/trade"
           search={{ coin: "eth", side: "buy" }}
-          className="rounded-full bg-secondary px-3.5 py-2 text-sm font-semibold text-secondary-foreground"
+          className="action-button rounded-md bg-secondary px-3.5 py-2 text-sm font-semibold text-secondary-foreground"
         >
           Swap
         </Link>
       </div>
 
       <section className="mt-4 px-5">
-        <div className="rounded-2xl border border-border bg-gradient-card p-4">
+        <div className="overflow-hidden rounded-lg border border-border bg-gradient-card p-4 transition-colors hover:border-brand/50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <CoinBadge glyph={featured.glyph} swatch={featured.swatch} className="size-7 text-[11px]" />
@@ -122,7 +122,7 @@ function Index() {
           <Link
             to="/coin/$coinId"
             params={{ coinId: featured.id }}
-            className="mt-3 flex h-11 w-full items-center justify-center rounded-xl bg-gradient-brand text-sm font-bold text-primary-foreground active:scale-[0.99]"
+            className="action-button mt-3 flex h-11 w-full items-center justify-center rounded-md bg-gradient-brand text-sm font-bold text-primary-foreground shadow-brand"
           >
             Trade {featured.name}
           </Link>
@@ -136,13 +136,13 @@ function Index() {
             View all
           </Link>
         </div>
-        <div className="space-y-2">
+        <div className="stagger-list space-y-2">
           {rows.slice(0, 3).map((coin) => (
             <Link
               key={coin.id}
               to="/coin/$coinId"
               params={{ coinId: coin.id }}
-              className="flex items-center justify-between rounded-xl border border-border bg-surface px-3 py-3"
+              className="market-row flex items-center justify-between rounded-lg border border-border bg-surface px-3 py-3"
             >
               <div className="flex items-center gap-3">
                 <CoinBadge glyph={coin.glyph} swatch={coin.swatch} />

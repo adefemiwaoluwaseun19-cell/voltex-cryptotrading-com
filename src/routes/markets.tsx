@@ -60,7 +60,7 @@ function MarketsPage() {
       </div>
 
       <div className="mt-4 px-5">
-        <div className="flex items-center gap-2 rounded-full border border-border bg-secondary px-3 py-2.5">
+        <div className="flex items-center gap-2 rounded-lg border border-border bg-secondary px-3 py-2.5 transition-colors focus-within:border-brand focus-within:bg-surface">
           <span className="text-sm text-muted-foreground">⌕</span>
           <input
             value={query}
@@ -78,7 +78,7 @@ function MarketsPage() {
             key={f}
             type="button"
             onClick={() => setFilter(f)}
-            className={`shrink-0 rounded-full px-3.5 py-2 text-sm font-semibold ${
+            className={`pressable shrink-0 rounded-md px-3.5 py-2 text-sm font-semibold transition-colors ${
               filter === f ? "bg-brand text-brand-foreground" : "bg-secondary text-secondary-foreground"
             }`}
           >
@@ -87,13 +87,13 @@ function MarketsPage() {
         ))}
       </div>
 
-      <div className="mt-3 space-y-2 px-5">
+      <div className="stagger-list mt-3 space-y-2 px-5">
         {rows.map((coin) => (
           <Link
             key={coin.id}
             to="/coin/$coinId"
             params={{ coinId: coin.id }}
-            className="flex items-center gap-3 rounded-xl border border-border bg-surface px-3 py-3"
+            className="market-row flex items-center gap-3 rounded-lg border border-border bg-surface px-3 py-3"
           >
             <CoinBadge glyph={coin.glyph} swatch={coin.swatch} />
             <div className="min-w-0 flex-1">
