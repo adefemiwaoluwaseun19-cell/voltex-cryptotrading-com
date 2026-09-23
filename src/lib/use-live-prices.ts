@@ -17,7 +17,7 @@ export function useLiveQuotes() {
 
 /** Static coin metadata merged with live price, 24h change, cap and volume. */
 export function useLiveCoins() {
-  const { data, isFetching, dataUpdatedAt, isError } = useLiveQuotes();
+  const { data, isFetching, dataUpdatedAt, isError, isPending } = useLiveQuotes();
 
   const liveCoins = useMemo<Coin[]>(
     () =>
@@ -28,7 +28,7 @@ export function useLiveCoins() {
     [data],
   );
 
-  return { coins: liveCoins, isLive: !!data, isFetching, isError, dataUpdatedAt };
+  return { coins: liveCoins, isLive: !!data, isFetching, isError, isLoading: isPending && !isError, dataUpdatedAt };
 }
 
 export function useLiveCoin(id: string) {
@@ -50,7 +50,7 @@ export function usePriceHistory(coinId: string, range: string, enabled = true) {
 
 /** Portfolio rows and totals derived from live prices. */
 export function useLivePortfolio() {
-  const { coins: liveCoins, isLive, isFetching, isError } = useLiveCoins();
+  const { coins: liveCoins, isLive, isFetching, isError, isLoading } = useLiveCoins();
 
   return useMemo(() => {
     const rows = liveCoins
@@ -63,6 +63,6 @@ export function useLivePortfolio() {
     const changeAbs = total - prev;
     const changePct = prev > 0 ? (changeAbs / prev) * 100 : 0;
 
-    return { rows, total, changeAbs, changePct, isLive, isFetching, isError };
-  }, [liveCoins, isLive, isFetching, isError]);
+    return { rows, total, changeAbs, changePct, isLive, isFetching, isError, isLoading };
+  }, [liveCoins, isLive, isFetching, isError, isLoading]);
 }
