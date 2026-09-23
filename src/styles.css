@@ -245,3 +245,31 @@
 @utility spin-slow {
   animation: spin360 3.5s linear infinite;
 }
+
+/* Loading placeholders */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: color-mix(in oklab, var(--muted) 70%, transparent);
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--brand) 18%, transparent), transparent);
+  animation: skeleton-sweep 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+@keyframes skeleton-sweep {
+  to { transform: translateX(100%); }
+}
+.chart-skeleton-line {
+  stroke-dasharray: 0.3 0.7;
+  animation: chart-skeleton 1.8s linear infinite;
+}
+@keyframes chart-skeleton {
+  to { stroke-dashoffset: -1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after, .chart-skeleton-line { animation: none; }
+}
