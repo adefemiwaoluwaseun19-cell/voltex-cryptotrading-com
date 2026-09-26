@@ -5,8 +5,10 @@ export function AppHeader({ title }: { title?: string }) {
   return (
     <header className="flex items-center justify-between px-5 pt-5">
       <Link to="/" className="group flex items-center gap-2.5 transition-opacity active:opacity-70">
-        <div className="logo-pulse grid size-8 place-items-center rounded-md bg-gradient-brand font-display text-sm font-bold text-primary-foreground shadow-brand">
-          V
+        <div className="orbit-ring">
+          <div className="logo-pulse grid size-8 place-items-center rounded-md bg-gradient-brand font-display text-sm font-bold text-primary-foreground shadow-brand">
+            V
+          </div>
         </div>
         <span className="font-display text-lg font-semibold tracking-tight">
           {title ?? "Voltex"}
@@ -19,7 +21,7 @@ export function AppHeader({ title }: { title?: string }) {
           className="pressable relative grid size-9 place-items-center rounded-full border border-border bg-secondary text-muted-foreground transition-colors hover:text-foreground"
         >
           <Bell className="size-4" strokeWidth={1.8} />
-          <span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-accent ring-2 ring-background" />
+          <span className="ping-dot absolute right-1.5 top-1.5 size-1.5 rounded-full bg-accent ring-2 ring-background" />
         </button>
         <Link
           to="/profile"
