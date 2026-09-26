@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo } from "react";
 import { getLiveQuotes, getPriceHistory, type LiveQuotes } from "@/lib/prices.functions";
-import { coins, holdingIds, type Coin } from "@/lib/market-data";
+import { coins, type Coin } from "@/lib/market-data";
 
 export function useLiveQuotes() {
   const fetchQuotes = useServerFn(getLiveQuotes);
