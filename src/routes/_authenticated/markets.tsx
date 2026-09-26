@@ -33,6 +33,7 @@ function MarketsPage() {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<(typeof filters)[number]>("All");
   const { coins, isLive, isError, isLoading } = useLiveCoins();
+  const { holdingsMap } = useAccount();
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -41,10 +42,10 @@ function MarketsPage() {
       .filter((c) => {
         if (filter === "Gainers") return c.change > 0;
         if (filter === "Losers") return c.change < 0;
-        if (filter === "Holdings") return c.holding > 0;
+        if (filter === "Holdings") return (holdingsMap?.[c.id] ?? 0) > 0;
         return true;
       });
-  }, [coins, query, filter]);
+  }, [coins, query, filter, holdingsMap]);
 
   return (
     <AppShell>

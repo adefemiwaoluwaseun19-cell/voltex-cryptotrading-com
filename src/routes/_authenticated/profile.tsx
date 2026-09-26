@@ -78,7 +78,7 @@ function ProfilePage() {
         <div className="mt-3 grid grid-cols-2 gap-2">
           <div className="rounded-lg border border-border bg-surface p-3">
             <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground">Total balance</p>
-            {isLoading || portfolioLoading ? (
+            {accountLoading ? (
               <Skeleton className="mt-1.5 h-5 w-24" />
             ) : (
               <p className="num mt-1 text-sm font-semibold">{formatUsd(grandTotal)}</p>
@@ -86,7 +86,7 @@ function ProfilePage() {
           </div>
           <div className="rounded-lg border border-border bg-surface p-3">
             <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground">Cash available</p>
-            {isLoading ? (
+            {accountLoading ? (
               <Skeleton className="mt-1.5 h-5 w-20" />
             ) : (
               <p className="num mt-1 text-sm font-semibold">{formatUsd(account?.cashUsd ?? 0)}</p>
