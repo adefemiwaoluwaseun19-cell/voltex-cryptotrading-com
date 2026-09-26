@@ -8,7 +8,7 @@ import { Sparkline } from "@/components/Sparkline";
 import { formatPct, formatUsd, getCoin } from "@/lib/market-data";
 import { useLiveCoin, usePriceHistory } from "@/lib/use-live-prices";
 
-export const Route = createFileRoute("/coin/$coinId")({
+export const Route = createFileRoute("/_authenticated/coin/$coinId")({
   loader: ({ params }) => {
     const coin = getCoin(params.coinId);
     if (!coin) throw notFound();

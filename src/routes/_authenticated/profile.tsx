@@ -3,7 +3,7 @@ import { AppShell } from "@/components/AppShell";
 import { AppHeader } from "@/components/AppHeader";
 import { formatUsd, portfolioValue } from "@/lib/market-data";
 
-export const Route = createFileRoute("/profile")({
+export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({
     meta: [
       { title: "Account and security — Voltex" },

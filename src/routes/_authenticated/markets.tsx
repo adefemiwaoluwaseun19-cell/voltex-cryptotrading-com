@@ -8,7 +8,7 @@ import { EmptyState, RowSkeletons } from "@/components/Placeholders";
 import { formatPct, formatUsd, sparkline } from "@/lib/market-data";
 import { useLiveCoins } from "@/lib/use-live-prices";
 
-export const Route = createFileRoute("/markets")({
+export const Route = createFileRoute("/_authenticated/markets")({
   head: () => ({
     meta: [
       { title: "Crypto markets and live prices — Voltex" },

@@ -7,7 +7,7 @@ import { Sparkline } from "@/components/Sparkline";
 import { formatPct, formatUsd, sparkline } from "@/lib/market-data";
 import { useLiveCoins, useLivePortfolio, usePriceHistory } from "@/lib/use-live-prices";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
     meta: [
       { title: "Voltex — Buy, sell and track crypto" },

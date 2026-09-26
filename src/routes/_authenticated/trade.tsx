@@ -7,7 +7,7 @@ import { coins, formatPct, formatUsd, getCoin } from "@/lib/market-data";
 
 type Side = "buy" | "sell";
 
-export const Route = createFileRoute("/trade")({
+export const Route = createFileRoute("/_authenticated/trade")({
   validateSearch: (search: Record<string, unknown>): { coin: string; side: Side } => ({
     coin: typeof search["coin"] === "string" ? search["coin"] : "btc",
     side: search["side"] === "sell" ? "sell" : "buy",

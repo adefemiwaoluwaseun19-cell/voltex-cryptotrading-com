@@ -6,7 +6,7 @@ import { EmptyState, RowSkeletons, Skeleton } from "@/components/Placeholders";
 import { activity, formatPct, formatUsd } from "@/lib/market-data";
 import { useLivePortfolio } from "@/lib/use-live-prices";
 
-export const Route = createFileRoute("/portfolio")({
+export const Route = createFileRoute("/_authenticated/portfolio")({
   head: () => ({
     meta: [
       { title: "Your crypto portfolio — Voltex" },
