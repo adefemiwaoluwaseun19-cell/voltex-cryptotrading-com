@@ -6,9 +6,10 @@ import { CoinBadge } from "@/components/CoinBadge";
 import { Sparkline } from "@/components/Sparkline";
 import { EmptyState, RowSkeletons } from "@/components/Placeholders";
 import { formatPct, formatUsd, sparkline } from "@/lib/market-data";
+import { useAccount } from "@/lib/use-account";
 import { useLiveCoins } from "@/lib/use-live-prices";
 
-export const Route = createFileRoute("/markets")({
+export const Route = createFileRoute("/_authenticated/markets")({
   head: () => ({
     meta: [
       { title: "Crypto markets and live prices — Voltex" },
@@ -33,6 +34,7 @@ function MarketsPage() {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<(typeof filters)[number]>("All");
   const { coins, isLive, isError, isLoading } = useLiveCoins();
+  const { holdingsMap } = useAccount();
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -41,10 +43,10 @@ function MarketsPage() {
       .filter((c) => {
         if (filter === "Gainers") return c.change > 0;
         if (filter === "Losers") return c.change < 0;
-        if (filter === "Holdings") return c.holding > 0;
+        if (filter === "Holdings") return (holdingsMap?.[c.id] ?? 0) > 0;
         return true;
       });
-  }, [coins, query, filter]);
+  }, [coins, query, filter, holdingsMap]);
 
   return (
     <AppShell>

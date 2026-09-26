@@ -6,9 +6,10 @@ import { CoinBadge } from "@/components/CoinBadge";
 import { ChartSkeleton } from "@/components/Placeholders";
 import { Sparkline } from "@/components/Sparkline";
 import { formatPct, formatUsd, getCoin } from "@/lib/market-data";
+import { useAccount } from "@/lib/use-account";
 import { useLiveCoin, usePriceHistory } from "@/lib/use-live-prices";
 
-export const Route = createFileRoute("/coin/$coinId")({
+export const Route = createFileRoute("/_authenticated/coin/$coinId")({
   loader: ({ params }) => {
     const coin = getCoin(params.coinId);
     if (!coin) throw notFound();
@@ -43,6 +44,8 @@ function CoinPage() {
   const { coin: liveCoin, isLive } = useLiveCoin(staticCoin.id);
   const coin = liveCoin ?? staticCoin;
   const up = coin.change >= 0;
+  const { holdingsMap } = useAccount();
+  const holding = holdingsMap?.[coin.id] ?? 0;
   const history = usePriceHistory(coin.id, range);
   const series = history.data && history.data.length > 1 ? history.data : undefined;
 
@@ -121,12 +124,18 @@ function CoinPage() {
       <section className="mt-4 px-5">
         <div className="rounded-lg border border-border bg-surface p-4">
           <h2 className="font-display text-sm font-semibold">Your position</h2>
-          <div className="mt-2 flex items-end justify-between">
-            <p className="num text-lg font-semibold">{formatUsd(coin.holding * coin.price)}</p>
-            <p className="num text-xs text-muted-foreground">
-              {coin.holding} {coin.symbol}
+          {holding > 0 ? (
+            <div className="mt-2 flex items-end justify-between">
+              <p className="num text-lg font-semibold">{formatUsd(holding * coin.price)}</p>
+              <p className="num text-xs text-muted-foreground">
+                {holding} {coin.symbol}
+              </p>
+            </div>
+          ) : (
+            <p className="mt-2 text-xs text-muted-foreground">
+              You don't own {coin.symbol} yet — tap Buy to get started.
             </p>
-          </div>
+          )}
           <p className="mt-3 text-xs leading-relaxed text-muted-foreground">{coin.about}</p>
         </div>
       </section>

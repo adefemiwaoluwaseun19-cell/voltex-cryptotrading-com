@@ -3,11 +3,13 @@ import { AppShell } from "@/components/AppShell";
 import { AppHeader } from "@/components/AppHeader";
 import { AppFooter } from "@/components/AppFooter";
 import { CoinBadge } from "@/components/CoinBadge";
+import { RowSkeletons, Skeleton } from "@/components/Placeholders";
 import { Sparkline } from "@/components/Sparkline";
 import { formatPct, formatUsd, sparkline } from "@/lib/market-data";
+import { useAccount } from "@/lib/use-account";
 import { useLiveCoins, useLivePortfolio, usePriceHistory } from "@/lib/use-live-prices";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
     meta: [
       { title: "Voltex — Buy, sell and track crypto" },
@@ -21,41 +23,51 @@ export const Route = createFileRoute("/")({
         property: "og:description",
         content: "Live crypto markets, instant trades and a portfolio view in one app.",
       },
-    ],
+],
   }),
   component: Index,
 });
 
 function Index() {
+  const { data: account, holdingsMap, isLoading: accountLoading } = useAccount();
   const { coins } = useLiveCoins();
-  const { rows, total, changeAbs, changePct } = useLivePortfolio();
+  const { rows, total, changeAbs, changePct, isLoading } = useLivePortfolio(holdingsMap);
   const featured = coins[0]!;
   const { data: history } = usePriceHistory(featured.id, "1D");
   const series = history?.length ? history : sparkline(featured.id, 40, featured.change > 0);
+
+  const grandTotal = (account?.cashUsd ?? 0) + total;
+  const firstName = (account?.displayName ?? "there").split(" ")[0];
 
   return (
     <AppShell>
       <AppHeader />
 
       <section className="animate-fade-in mt-5 px-5">
-        <p className="text-sm text-muted-foreground">Welcome back, Jordan</p>
+        <p className="text-sm text-muted-foreground">Welcome back, {firstName}</p>
         <div className="mt-1 flex items-end justify-between">
           <div>
             <h1 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">
               Total balance
             </h1>
-            <p className="num mt-1 font-display text-4xl font-semibold tracking-tight">
-              {formatUsd(total)}
-            </p>
+            {accountLoading || isLoading ? (
+              <Skeleton className="mt-1 h-10 w-52" />
+            ) : (
+              <p className="num mt-1 font-display text-4xl font-semibold tracking-tight">
+                {formatUsd(grandTotal)}
+              </p>
+            )}
           </div>
-          <span
-            className={`num mb-1 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
-              changeAbs >= 0 ? "bg-up/15 text-up" : "bg-down/15 text-down"
-            }`}
-          >
-            <span className="text-[10px]">{changeAbs >= 0 ? "▲" : "▼"}</span>{" "}
-            {formatUsd(Math.abs(changeAbs))} ({formatPct(changePct)})
-          </span>
+          {!accountLoading && !isLoading && (
+            <span
+              className={`num mb-1 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                changeAbs >= 0 ? "bg-up/15 text-up" : "bg-down/15 text-down"
+              }`}
+            >
+              <span className="text-[10px]">{changeAbs >= 0 ? "▲" : "▼"}</span>{" "}
+              {formatUsd(Math.abs(changeAbs))} ({formatPct(changePct)})
+            </span>
+          )}
         </div>
       </section>
 
@@ -141,36 +153,56 @@ function Index() {
             View all
           </Link>
         </div>
-        <div className="stagger-list space-y-2">
-          {rows.slice(0, 3).map((coin) => (
+        {accountLoading || isLoading ? (
+          <div className="space-y-2">
+            <RowSkeletons count={3} spark={false} />
+          </div>
+        ) : rows.length === 0 ? (
+          <div className="rounded-lg border border-border bg-surface px-4 py-6 text-center">
+            <p className="text-sm font-semibold">No holdings yet</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Your first buy will show up here.
+            </p>
             <Link
-              key={coin.id}
-              to="/coin/$coinId"
-              params={{ coinId: coin.id }}
-              className="market-row flex items-center justify-between rounded-lg border border-border bg-surface px-3 py-3"
+              to="/trade"
+              search={{ coin: "btc", side: "buy" }}
+              className="pressable mt-3 inline-block rounded-md bg-brand px-3.5 py-2 text-xs font-semibold text-brand-foreground shadow-brand"
             >
-              <div className="flex items-center gap-3">
-                <CoinBadge glyph={coin.glyph} swatch={coin.swatch} />
-                <div>
-                  <p className="text-sm font-semibold leading-none">{coin.name}</p>
-                  <p className="num mt-1 text-[11px] text-muted-foreground">
-                    {coin.holding} {coin.symbol}
+              Buy Bitcoin
+            </Link>
+          </div>
+        ) : (
+          <div className="stagger-list space-y-2">
+            {rows.slice(0, 3).map((coin) => (
+              <Link
+                key={coin.id}
+                to="/coin/$coinId"
+                params={{ coinId: coin.id }}
+                className="market-row flex items-center justify-between rounded-lg border border-border bg-surface px-3 py-3"
+              >
+                <div className="flex items-center gap-3">
+                  <CoinBadge glyph={coin.glyph} swatch={coin.swatch} />
+                  <div>
+                    <p className="text-sm font-semibold leading-none">{coin.name}</p>
+                    <p className="num mt-1 text-[11px] text-muted-foreground">
+                      {coin.holding} {coin.symbol}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="num text-sm font-semibold leading-none">
+                    {formatUsd(coin.holding * coin.price)}
+                  </p>
+                  <p
+                    className={`num mt-1 text-[11px] ${coin.change >= 0 ? "text-up" : "text-down"}`}
+                  >
+                    {formatPct(coin.change)}
                   </p>
                 </div>
-              </div>
-              <div className="text-right">
-                <p className="num text-sm font-semibold leading-none">
-                  {formatUsd(coin.holding * coin.price)}
-                </p>
-                <p
-                  className={`num mt-1 text-[11px] ${coin.change >= 0 ? "text-up" : "text-down"}`}
-                >
-                  {formatPct(coin.change)}
-                </p>
-              </div>
-            </Link>
-          ))}
-        </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </section>
 
       <AppFooter />

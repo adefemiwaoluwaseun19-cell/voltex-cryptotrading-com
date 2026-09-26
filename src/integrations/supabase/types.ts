@@ -14,13 +14,119 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      holdings: {
+        Row: {
+          amount: number
+          coin_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          coin_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          coin_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string
+          id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string
+          id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          coin_id: string
+          created_at: string
+          fee_usd: number
+          id: string
+          kind: string
+          price_usd: number
+          total_usd: number
+          units: number
+          user_id: string
+        }
+        Insert: {
+          coin_id: string
+          created_at?: string
+          fee_usd: number
+          id?: string
+          kind: string
+          price_usd: number
+          total_usd: number
+          units: number
+          user_id: string
+        }
+        Update: {
+          coin_id?: string
+          created_at?: string
+          fee_usd?: number
+          id?: string
+          kind?: string
+          price_usd?: number
+          total_usd?: number
+          units?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wallets: {
+        Row: {
+          cash_usd: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cash_usd?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cash_usd?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      execute_trade: {
+        Args: {
+          _coin_id: string
+          _price_usd: number
+          _side: string
+          _usd_amount: number
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
