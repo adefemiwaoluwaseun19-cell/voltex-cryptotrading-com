@@ -9,148 +9,173 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as MarketsRouteImport } from './routes/markets'
-import { Route as PortfolioRouteImport } from './routes/portfolio'
-import { Route as ProfileRouteImport } from './routes/profile'
-import { Route as TradeRouteImport } from './routes/trade'
-import { Route as CoinCoinIdRouteImport } from './routes/coin.$coinId'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedMarketsRouteImport } from './routes/_authenticated/markets'
+import { Route as AuthenticatedPortfolioRouteImport } from './routes/_authenticated/portfolio'
+import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
+import { Route as AuthenticatedTradeRouteImport } from './routes/_authenticated/trade'
+import { Route as AuthenticatedCoinCoinIdRouteImport } from './routes/_authenticated/coin.$coinId'
 
-const IndexRoute = IndexRouteImport.update({
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const MarketsRoute = MarketsRouteImport.update({
+const AuthenticatedMarketsRoute = AuthenticatedMarketsRouteImport.update({
   id: '/markets',
   path: '/markets',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const PortfolioRoute = PortfolioRouteImport.update({
+const AuthenticatedPortfolioRoute = AuthenticatedPortfolioRouteImport.update({
   id: '/portfolio',
   path: '/portfolio',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const ProfileRoute = ProfileRouteImport.update({
+const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const TradeRoute = TradeRouteImport.update({
+const AuthenticatedTradeRoute = AuthenticatedTradeRouteImport.update({
   id: '/trade',
   path: '/trade',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const CoinCoinIdRoute = CoinCoinIdRouteImport.update({
+const AuthenticatedCoinCoinIdRoute = AuthenticatedCoinCoinIdRouteImport.update({
   id: '/coin/$coinId',
   path: '/coin/$coinId',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/markets': typeof MarketsRoute
-  '/portfolio': typeof PortfolioRoute
-  '/profile': typeof ProfileRoute
-  '/trade': typeof TradeRoute
-  '/coin/$coinId': typeof CoinCoinIdRoute
+  '/': typeof AuthenticatedIndexRoute
+  '/markets': typeof AuthenticatedMarketsRoute
+  '/portfolio': typeof AuthenticatedPortfolioRoute
+  '/profile': typeof AuthenticatedProfileRoute
+  '/trade': typeof AuthenticatedTradeRoute
+  '/coin/$coinId': typeof AuthenticatedCoinCoinIdRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/markets': typeof MarketsRoute
-  '/portfolio': typeof PortfolioRoute
-  '/profile': typeof ProfileRoute
-  '/trade': typeof TradeRoute
-  '/coin/$coinId': typeof CoinCoinIdRoute
+  '/markets': typeof AuthenticatedMarketsRoute
+  '/portfolio': typeof AuthenticatedPortfolioRoute
+  '/profile': typeof AuthenticatedProfileRoute
+  '/trade': typeof AuthenticatedTradeRoute
+  '/': typeof AuthenticatedIndexRoute
+  '/coin/$coinId': typeof AuthenticatedCoinCoinIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/markets': typeof MarketsRoute
-  '/portfolio': typeof PortfolioRoute
-  '/profile': typeof ProfileRoute
-  '/trade': typeof TradeRoute
-  '/coin/$coinId': typeof CoinCoinIdRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/_authenticated/markets': typeof AuthenticatedMarketsRoute
+  '/_authenticated/portfolio': typeof AuthenticatedPortfolioRoute
+  '/_authenticated/profile': typeof AuthenticatedProfileRoute
+  '/_authenticated/trade': typeof AuthenticatedTradeRoute
+  '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/coin/$coinId': typeof AuthenticatedCoinCoinIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     '/' | '/markets' | '/portfolio' | '/profile' | '/trade' | '/coin/$coinId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/markets' | '/portfolio' | '/profile' | '/trade' | '/coin/$coinId'
+  to: '/markets' | '/portfolio' | '/profile' | '/trade' | '/' | '/coin/$coinId'
   id:
     | '__root__'
-    | '/'
-    | '/markets'
-    | '/portfolio'
-    | '/profile'
-    | '/trade'
-    | '/coin/$coinId'
+    | '/_authenticated'
+    | '/_authenticated/markets'
+    | '/_authenticated/portfolio'
+    | '/_authenticated/profile'
+    | '/_authenticated/trade'
+    | '/_authenticated/'
+    | '/_authenticated/coin/$coinId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  MarketsRoute: typeof MarketsRoute
-  PortfolioRoute: typeof PortfolioRoute
-  ProfileRoute: typeof ProfileRoute
-  TradeRoute: typeof TradeRoute
-  CoinCoinIdRoute: typeof CoinCoinIdRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/': {
+      id: '/_authenticated/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/markets': {
-      id: '/markets'
+    '/_authenticated/markets': {
+      id: '/_authenticated/markets'
       path: '/markets'
       fullPath: '/markets'
-      preLoaderRoute: typeof MarketsRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedMarketsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/portfolio': {
-      id: '/portfolio'
+    '/_authenticated/portfolio': {
+      id: '/_authenticated/portfolio'
       path: '/portfolio'
       fullPath: '/portfolio'
-      preLoaderRoute: typeof PortfolioRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedPortfolioRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/profile': {
-      id: '/profile'
+    '/_authenticated/profile': {
+      id: '/_authenticated/profile'
       path: '/profile'
       fullPath: '/profile'
-      preLoaderRoute: typeof ProfileRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedProfileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/trade': {
-      id: '/trade'
+    '/_authenticated/trade': {
+      id: '/_authenticated/trade'
       path: '/trade'
       fullPath: '/trade'
-      preLoaderRoute: typeof TradeRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedTradeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/coin/$coinId': {
-      id: '/coin/$coinId'
+    '/_authenticated/coin/$coinId': {
+      id: '/_authenticated/coin/$coinId'
       path: '/coin/$coinId'
       fullPath: '/coin/$coinId'
-      preLoaderRoute: typeof CoinCoinIdRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedCoinCoinIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedMarketsRoute: typeof AuthenticatedMarketsRoute
+  AuthenticatedPortfolioRoute: typeof AuthenticatedPortfolioRoute
+  AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
+  AuthenticatedTradeRoute: typeof AuthenticatedTradeRoute
+  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedCoinCoinIdRoute: typeof AuthenticatedCoinCoinIdRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedMarketsRoute: AuthenticatedMarketsRoute,
+  AuthenticatedPortfolioRoute: AuthenticatedPortfolioRoute,
+  AuthenticatedProfileRoute: AuthenticatedProfileRoute,
+  AuthenticatedTradeRoute: AuthenticatedTradeRoute,
+  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedCoinCoinIdRoute: AuthenticatedCoinCoinIdRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  MarketsRoute: MarketsRoute,
-  PortfolioRoute: PortfolioRoute,
-  ProfileRoute: ProfileRoute,
-  TradeRoute: TradeRoute,
-  CoinCoinIdRoute: CoinCoinIdRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

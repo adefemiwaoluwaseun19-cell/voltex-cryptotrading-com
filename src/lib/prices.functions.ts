@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 // Internal coin id -> CoinGecko id
-const GECKO_IDS: Record<string, string> = {
+export const GECKO_IDS: Record<string, string> = {
   btc: "bitcoin",
   eth: "ethereum",
   sol: "solana",
