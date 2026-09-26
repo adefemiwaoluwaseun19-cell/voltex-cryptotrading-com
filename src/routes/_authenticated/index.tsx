@@ -23,7 +23,7 @@ export const Route = createFileRoute("/_authenticated/")({
         property: "og:description",
         content: "Live crypto markets, instant trades and a portfolio view in one app.",
       },
-et    ],
+],
   }),
   component: Index,
 });

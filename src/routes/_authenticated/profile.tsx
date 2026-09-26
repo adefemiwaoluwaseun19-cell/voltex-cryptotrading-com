@@ -38,8 +38,7 @@ const groups = [
 function ProfilePage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { data: account, isLoading } = useAccount();
-  const { holdingsMap, isLoading: portfolioLoading } = useAccount();
+  const { data: account, holdingsMap, isLoading: accountLoading } = useAccount();
   const { total } = useLivePortfolio(holdingsMap);
 
   const name = account?.displayName ?? "Trader";
