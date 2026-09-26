@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { AppHeader } from "@/components/AppHeader";
+import { AppFooter } from "@/components/AppFooter";
 import { CoinBadge } from "@/components/CoinBadge";
 import { Sparkline } from "@/components/Sparkline";
 import { formatPct, formatUsd, sparkline } from "@/lib/market-data";
@@ -100,7 +101,11 @@ function Index() {
       </div>
 
       <section className="mt-4 px-5">
-        <div className="overflow-hidden rounded-lg border border-border bg-gradient-card p-4 transition-colors hover:border-brand/50">
+        <div className="relative overflow-hidden rounded-lg border border-border bg-gradient-card p-4 transition-colors hover:border-brand/50">
+          <span
+            aria-hidden
+            className="glow-orb pointer-events-none absolute -right-10 -top-10 size-32 rounded-full bg-brand/15 blur-2xl"
+          />
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <CoinBadge glyph={featured.glyph} swatch={featured.swatch} className="size-7 text-[11px]" />
@@ -167,6 +172,8 @@ function Index() {
           ))}
         </div>
       </section>
+
+      <AppFooter />
     </AppShell>
   );
 }
