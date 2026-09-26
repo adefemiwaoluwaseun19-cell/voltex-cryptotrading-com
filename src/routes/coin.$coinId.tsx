@@ -3,8 +3,9 @@ import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { AppHeader } from "@/components/AppHeader";
 import { CoinBadge } from "@/components/CoinBadge";
+import { ChartSkeleton } from "@/components/Placeholders";
 import { Sparkline } from "@/components/Sparkline";
-import { formatPct, formatUsd, getCoin, sparkline } from "@/lib/market-data";
+import { formatPct, formatUsd, getCoin } from "@/lib/market-data";
 import { useLiveCoin, usePriceHistory } from "@/lib/use-live-prices";
 
 export const Route = createFileRoute("/coin/$coinId")({
@@ -43,10 +44,7 @@ function CoinPage() {
   const coin = liveCoin ?? staticCoin;
   const up = coin.change >= 0;
   const history = usePriceHistory(coin.id, range);
-  const series =
-    history.data && history.data.length > 1
-      ? history.data
-      : sparkline(coin.id + range, 60, up);
+  const series = history.data && history.data.length > 1 ? history.data : undefined;
 
   return (
     <AppShell>
@@ -88,7 +86,22 @@ function CoinPage() {
 
       <div className="mt-3 px-5">
         <div className="h-44 overflow-hidden rounded-lg border border-border bg-gradient-card p-2">
-          <Sparkline id={`detail-${coin.id}-${range}`} values={series} up={up} area className="h-full w-full" />
+          {history.isPending ? (
+            <ChartSkeleton />
+          ) : series ? (
+            <Sparkline id={`detail-${coin.id}-${range}`} values={series} up={up} area className="h-full w-full" />
+          ) : (
+            <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
+              <p className="text-xs text-muted-foreground">Chart unavailable right now.</p>
+              <button
+                type="button"
+                onClick={() => history.refetch()}
+                className="pressable rounded-md bg-secondary px-3 py-1.5 text-xs font-semibold text-secondary-foreground"
+              >
+                Retry
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
