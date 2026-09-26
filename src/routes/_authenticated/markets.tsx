@@ -6,6 +6,7 @@ import { CoinBadge } from "@/components/CoinBadge";
 import { Sparkline } from "@/components/Sparkline";
 import { EmptyState, RowSkeletons } from "@/components/Placeholders";
 import { formatPct, formatUsd, sparkline } from "@/lib/market-data";
+import { useAccount } from "@/lib/use-account";
 import { useLiveCoins } from "@/lib/use-live-prices";
 
 export const Route = createFileRoute("/_authenticated/markets")({
