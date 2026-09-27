@@ -15,7 +15,7 @@ export const Route = createFileRoute("/_authenticated/profile")({
       { title: "Account and security — Voltex" },
       {
         name: "description",
-        content: "Manage your Voltex account: profile, demo cash balance, security and sign out.",
+        content: "Manage your Voltex account: profile, balance, security and sign out.",
       },
       { property: "og:title", content: "Account and security — Voltex" },
       { property: "og:description", content: "Profile, balance, security settings and alerts." },
@@ -70,7 +70,7 @@ function ProfilePage() {
             <h1 className="truncate font-display text-lg font-semibold leading-tight">{name}</h1>
             <p className="truncate text-xs text-muted-foreground">{account?.email ?? "…"}</p>
             <span className="mt-1.5 inline-flex rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-semibold text-accent">
-              Demo trading account
+              Verified trading account
             </span>
           </div>
         </div>

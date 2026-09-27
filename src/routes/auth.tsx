@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
@@ -25,6 +25,18 @@ function AuthPage() {
   const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [details, setDetails] = useState({
+    full_name: "",
+    date_of_birth: "",
+    address_line1: "",
+    address_line2: "",
+    city: "",
+    state_region: "",
+    postal_code: "",
+    country: "",
+  });
+  const setField = (k: keyof typeof details) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setDetails((d) => ({ ...d, [k]: e.target.value }));
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -36,13 +48,25 @@ function AuthPage() {
     if (busy) return;
     setError(null);
     setNotice(null);
+    if (mode === "signup" && details.date_of_birth) {
+      const dob = new Date(details.date_of_birth);
+      const adult = new Date();
+      adult.setFullYear(adult.getFullYear() - 18);
+      if (dob > adult) {
+        setError("You must be at least 18 years old to open an account.");
+        return;
+      }
+    }
     setBusy(true);
     try {
       if (mode === "signup") {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: window.location.origin },
+          options: {
+            emailRedirectTo: window.location.origin,
+            data: Object.fromEntries(Object.entries(details).map(([k, v]) => [k, v.trim()])),
+          },
         });
         if (error) throw error;
         if (!data.session) {
@@ -98,7 +122,7 @@ function AuthPage() {
             <p className="mt-1 text-sm text-muted-foreground">
               {mode === "signin"
                 ? "Sign in to your Voltex trading account"
-                : "Start with $10,000 in demo cash — no card needed"}
+                : "Open your Voltex account in minutes — verified, secure, ready to trade"}
             </p>
           </div>
         </div>
@@ -124,6 +148,22 @@ function AuthPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="mt-4 space-y-3">
+            {mode === "signup" && (
+              <div className="space-y-3">
+                <Field label="Full legal name" value={details.full_name} onChange={setField("full_name")} autoComplete="name" required placeholder="Jane A. Doe" />
+                <Field label="Date of birth" type="date" value={details.date_of_birth} onChange={setField("date_of_birth")} autoComplete="bday" required />
+                <Field label="Street address" value={details.address_line1} onChange={setField("address_line1")} autoComplete="address-line1" required placeholder="123 Market Street" />
+                <Field label="Apartment, suite (optional)" value={details.address_line2} onChange={setField("address_line2")} autoComplete="address-line2" placeholder="Suite 400" />
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="City" value={details.city} onChange={setField("city")} autoComplete="address-level2" required />
+                  <Field label="State / Region" value={details.state_region} onChange={setField("state_region")} autoComplete="address-level1" required />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Postal code" value={details.postal_code} onChange={setField("postal_code")} autoComplete="postal-code" required />
+                  <Field label="Country" value={details.country} onChange={setField("country")} autoComplete="country-name" required />
+                </div>
+              </div>
+            )}
             <label className="block">
               <span className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground">Email</span>
               <input
@@ -191,7 +231,29 @@ function AuthPage() {
             </p>
           )}
         </div>
+        <p className="mt-5 text-center text-[11px] text-muted-foreground">
+          By continuing you agree to our terms and acknowledge the{" "}
+          <Link to="/about" hash="legal" className="text-brand underline-offset-2 hover:underline">
+            legal disclaimer
+          </Link>
+          . <Link to="/about" className="text-brand underline-offset-2 hover:underline">About Voltex</Link>
+        </p>
       </div>
     </div>
+  );
+}
+
+function Field({
+  label,
+  ...props
+}: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <label className="block">
+      <span className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground">{label}</span>
+      <input
+        {...props}
+        className="mt-1 w-full rounded-md border border-border bg-secondary px-3 py-2.5 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-brand"
+      />
+    </label>
   );
 }

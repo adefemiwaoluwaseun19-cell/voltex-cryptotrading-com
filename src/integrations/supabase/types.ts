@@ -40,22 +40,46 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address_line1: string | null
+          address_line2: string | null
           avatar_url: string | null
+          city: string | null
+          country: string | null
           created_at: string
+          date_of_birth: string | null
           display_name: string
+          full_name: string | null
           id: string
+          postal_code: string | null
+          state_region: string | null
         }
         Insert: {
+          address_line1?: string | null
+          address_line2?: string | null
           avatar_url?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string
+          date_of_birth?: string | null
           display_name?: string
+          full_name?: string | null
           id: string
+          postal_code?: string | null
+          state_region?: string | null
         }
         Update: {
+          address_line1?: string | null
+          address_line2?: string | null
           avatar_url?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string
+          date_of_birth?: string | null
           display_name?: string
+          full_name?: string | null
           id?: string
+          postal_code?: string | null
+          state_region?: string | null
         }
         Relationships: []
       }

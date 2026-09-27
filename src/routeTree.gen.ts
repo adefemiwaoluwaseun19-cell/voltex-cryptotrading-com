@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedMarketsRouteImport } from './routes/_authenticated/markets'
@@ -20,6 +21,11 @@ import { Route as AuthenticatedCoinCoinIdRouteImport } from './routes/_authentic
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -60,6 +66,7 @@ const AuthenticatedCoinCoinIdRoute = AuthenticatedCoinCoinIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
+  '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/markets': typeof AuthenticatedMarketsRoute
   '/portfolio': typeof AuthenticatedPortfolioRoute
@@ -68,6 +75,7 @@ export interface FileRoutesByFullPath {
   '/coin/$coinId': typeof AuthenticatedCoinCoinIdRoute
 }
 export interface FileRoutesByTo {
+  '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/markets': typeof AuthenticatedMarketsRoute
   '/portfolio': typeof AuthenticatedPortfolioRoute
@@ -79,6 +87,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/_authenticated/markets': typeof AuthenticatedMarketsRoute
   '/_authenticated/portfolio': typeof AuthenticatedPortfolioRoute
@@ -91,6 +100,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/about'
     | '/auth'
     | '/markets'
     | '/portfolio'
@@ -99,6 +109,7 @@ export interface FileRouteTypes {
     | '/coin/$coinId'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/about'
     | '/auth'
     | '/markets'
     | '/portfolio'
@@ -109,6 +120,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_authenticated'
+    | '/about'
     | '/auth'
     | '/_authenticated/markets'
     | '/_authenticated/portfolio'
@@ -120,6 +132,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AboutRoute: typeof AboutRoute
   AuthRoute: typeof AuthRoute
 }
 
@@ -130,6 +143,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -207,6 +227,7 @@ const AuthenticatedRouteRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AboutRoute: AboutRoute,
   AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport
