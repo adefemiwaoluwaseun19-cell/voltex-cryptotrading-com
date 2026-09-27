@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { ShieldCheck, Zap } from "lucide-react";
 
 const TICKER_ITEMS = [
@@ -27,9 +28,12 @@ export function AppFooter() {
           ))}
         </div>
       </div>
-      <div className="flex items-center justify-center gap-1.5 border-t border-border/40 py-2 text-[10px] text-muted-foreground/70">
-        <ShieldCheck className="size-3 text-up/70" strokeWidth={2} />
-        Voltex — demo trading experience. Not financial advice.
+      <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-t border-border/40 px-4 py-2 text-[10px] text-muted-foreground/70">
+        <span className="flex items-center gap-1.5">
+          <ShieldCheck className="size-3 text-up/70" strokeWidth={2} />© {new Date().getFullYear()} Voltex. All rights reserved.
+        </span>
+        <Link to="/about" className="hover:text-foreground">About</Link>
+        <Link to="/about" hash="legal" className="hover:text-foreground">Legal</Link>
       </div>
     </footer>
   );
