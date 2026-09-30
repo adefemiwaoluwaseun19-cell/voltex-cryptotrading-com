@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Bell, ShieldCheck } from "lucide-react";
 import { useAccount } from "@/lib/use-account";
+import logo from "@/assets/voltex-logo.png";
 
 export function AppHeader({ title }: { title?: string }) {
   const { data: account, isLoading } = useAccount();
@@ -15,14 +16,8 @@ export function AppHeader({ title }: { title?: string }) {
   return (
     <header className="flex items-center justify-between px-5 pt-5">
       <Link to="/" className="group flex items-center gap-2.5 transition-opacity active:opacity-70">
-        <div className="orbit-ring">
-          <div className="logo-pulse grid size-8 place-items-center rounded-md bg-gradient-brand font-display text-sm font-bold text-primary-foreground shadow-brand">
-            V
-          </div>
-        </div>
-        <span className="font-display text-lg font-semibold tracking-tight">
-          {title ?? "Voltex"}
-        </span>
+        <img src={logo} alt="Voltex" className="h-9 w-auto object-contain" />
+        {title && <span className="font-display text-lg font-semibold tracking-tight">{title}</span>}
       </Link>
       <div className="flex items-center gap-2">
         <button
