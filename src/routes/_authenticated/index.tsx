@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { DesktopLanding } from "@/components/DesktopLanding";
 import { AppShell } from "@/components/AppShell";
 import { AppHeader } from "@/components/AppHeader";
 import { AppFooter } from "@/components/AppFooter";
@@ -40,6 +41,11 @@ function Index() {
   const firstName = (account?.displayName ?? "there").split(" ")[0];
 
   return (
+    <>
+    <div className="hidden lg:block">
+      <DesktopLanding balance={accountLoading || isLoading ? null : grandTotal} changePct={changePct} featured={featured} series={series} rows={rows.slice(0, 3)} />
+    </div>
+    <div className="lg:hidden">
     <AppShell>
       <AppHeader />
 
@@ -207,5 +213,7 @@ function Index() {
 
       <AppFooter />
     </AppShell>
+    </div>
+    </>
   );
 }
