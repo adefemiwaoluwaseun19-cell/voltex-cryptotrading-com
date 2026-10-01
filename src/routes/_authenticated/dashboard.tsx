@@ -10,7 +10,7 @@ import { formatPct, formatUsd, sparkline } from "@/lib/market-data";
 import { useAccount } from "@/lib/use-account";
 import { useLiveCoins, useLivePortfolio, usePriceHistory } from "@/lib/use-live-prices";
 
-export const Route = createFileRoute("/_authenticated/")({
+export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
       { title: "Voltex — Buy, sell and track crypto" },

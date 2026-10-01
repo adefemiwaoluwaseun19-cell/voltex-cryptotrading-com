@@ -72,6 +72,7 @@
   --gradient-brand: linear-gradient(90deg, var(--brand), var(--accent));
   --gradient-rail: linear-gradient(90deg, var(--brand), var(--accent), oklch(0.72 0.17 300));
   --gradient-card: linear-gradient(180deg, oklch(1 0 0 / 7%), transparent);
+  --gradient-hero-veil: linear-gradient(90deg, oklch(0.08 0.012 240 / 93%) 0%, oklch(0.09 0.015 240 / 82%) 39%, oklch(0.08 0.012 240 / 12%) 76%);
   --shadow-brand: 0 8px 28px oklch(0.585 0.212 277 / 28%);
   --shadow-coin: 0 5px 16px oklch(0 0 0 / 22%);
 }
@@ -103,6 +104,16 @@
 
 @utility bg-gradient-card {
   background-image: var(--gradient-card);
+}
+
+@utility bg-hero-veil {
+  background-image: var(--gradient-hero-veil);
+}
+
+@media (max-width: 639px) {
+  :root {
+    --gradient-hero-veil: linear-gradient(90deg, oklch(0.08 0.012 240 / 96%), oklch(0.08 0.012 240 / 78%));
+  }
 }
 
 @utility num {

@@ -11,7 +11,7 @@ type Coin = { id: string; name: string; symbol: string; glyph: string; swatch: s
 type Row = Coin & { holding: number };
 
 const NAV = [
-  { to: "/", label: "Home" },
+  { to: "/dashboard", label: "Home" },
   { to: "/markets", label: "Markets" },
   { to: "/trade", label: "Trade" },
   { to: "/portfolio", label: "Portfolio" },
@@ -42,10 +42,10 @@ export function DesktopLanding({
     <div className="relative min-h-screen overflow-hidden bg-background">
       <FloatingIcons />
       <header className="relative z-10 mx-auto flex max-w-7xl items-center justify-between px-8 py-5">
-        <Link to="/"><img src={logo} alt="Voltex" className="h-12 w-auto" /></Link>
+        <Link to="/dashboard"><img src={logo} alt="Voltex" className="h-12 w-auto" /></Link>
         <nav className="flex items-center gap-8 text-sm font-medium text-muted-foreground">
           {NAV.map((n) => (
-            <Link key={n.to} to={n.to} activeOptions={{ exact: n.to === "/" }} className="transition-colors hover:text-foreground" activeProps={{ className: "text-foreground" }}>
+            <Link key={n.to} to={n.to} activeOptions={{ exact: n.to === "/dashboard" }} className="transition-colors hover:text-foreground" activeProps={{ className: "text-foreground" }}>
               {n.label}
             </Link>
           ))}

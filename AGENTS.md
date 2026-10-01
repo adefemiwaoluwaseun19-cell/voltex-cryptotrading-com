@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Keep `/` public for the marketing landing page and `/dashboard` behind the authenticated layout; visitors need a discoverable first screen without exposing account data.
