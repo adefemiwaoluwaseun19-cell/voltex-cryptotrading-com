@@ -40,7 +40,7 @@ function AuthPage() {
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const afterSession = () => navigate({ to: "/", replace: true });
+  const afterSession = () => navigate({ to: "/dashboard", replace: true });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

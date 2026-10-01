@@ -15,7 +15,7 @@ export function AppHeader({ title }: { title?: string }) {
 
   return (
     <header className="flex items-center justify-between px-5 pt-5">
-      <Link to="/" className="group flex items-center gap-2.5 transition-opacity active:opacity-70">
+      <Link to="/dashboard" className="group flex items-center gap-2.5 transition-opacity active:opacity-70">
         <img src={logo} alt="Voltex" className="h-9 w-auto object-contain" />
         {title && <span className="font-display text-lg font-semibold tracking-tight">{title}</span>}
       </Link>
