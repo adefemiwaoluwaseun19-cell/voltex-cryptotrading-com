@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      btc_addresses: {
+        Row: {
+          address: string | null
+          created_at: string
+          derivation_index: number
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          derivation_index?: never
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          derivation_index?: never
+          user_id?: string
+        }
+        Relationships: []
+      }
       holdings: {
         Row: {
           amount: number
