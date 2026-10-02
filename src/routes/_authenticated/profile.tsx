@@ -1,6 +1,43 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
-import { LogOut } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
+import { Bitcoin, Check, Copy, LogOut } from "lucide-react";
+import { getBtcAddress } from "@/lib/wallet.functions";
+
+function BtcAddressCard() {
+  const fetchAddr = useServerFn(getBtcAddress);
+  const { data, isLoading } = useQuery({ queryKey: ["btc-address"], queryFn: () => fetchAddr(), staleTime: Infinity });
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    if (!data?.address) return;
+    await navigator.clipboard.writeText(data.address);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+  return (
+    <section className="mt-5 px-5">
+      <h2 className="mb-3 font-display text-base font-semibold">Your Bitcoin deposit address</h2>
+      <div className="rounded-lg border border-border bg-surface p-3">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Bitcoin className="size-4 text-accent" /> Send only BTC on the Bitcoin network
+        </div>
+        {isLoading ? (
+          <Skeleton className="mt-2 h-5 w-full" />
+        ) : data?.address ? (
+          <div className="mt-2 flex items-center gap-2">
+            <code className="num min-w-0 flex-1 break-all text-sm font-semibold">{data.address}</code>
+            <button type="button" onClick={copy} aria-label="Copy address" className="pressable rounded-md border border-border p-2 hover:border-brand">
+              {copied ? <Check className="size-4 text-up" /> : <Copy className="size-4" />}
+            </button>
+          </div>
+        ) : (
+          <p className="mt-2 text-sm text-muted-foreground">Bitcoin deposits are being set up. Check back soon.</p>
+        )}
+      </div>
+    </section>
+  );
+}
 import { AppShell } from "@/components/AppShell";
 import { AppHeader } from "@/components/AppHeader";
 import { Skeleton } from "@/components/Placeholders";
@@ -94,6 +131,8 @@ function ProfilePage() {
           </div>
         </div>
       </section>
+
+      <BtcAddressCard />
 
       {groups.map((group) => (
         <section key={group.title} className="mt-5 px-5">
