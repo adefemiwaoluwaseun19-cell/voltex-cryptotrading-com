@@ -28,3 +28,35 @@ export const getBtcAddress = createServerFn({ method: "GET" })
     await supabaseAdmin.from("btc_addresses").update({ address }).eq("user_id", userId);
     return { address, configured: true };
   });
+
+export type BtcDeposit = { txid: string; amountBtc: number; confirmations: number; time: number | null };
+
+export const getBtcDeposits = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<BtcDeposit[]> => {
+    const { data } = await context.supabase
+      .from("btc_addresses").select("address").eq("user_id", context.userId).maybeSingle();
+    const address = data?.address;
+    if (!address) return [];
+    const base = "https://mempool.space/api";
+    const [txRes, tipRes] = await Promise.all([fetch(`${base}/address/${address}/txs`), fetch(`${base}/blocks/tip/height`)]);
+    if (!txRes.ok || !tipRes.ok) throw new Error("Deposit tracking is temporarily unavailable");
+    const tip = Number(await tipRes.text());
+    type Tx = {
+      txid: string;
+      vout: { scriptpubkey_address?: string; value: number }[];
+      status: { confirmed: boolean; block_height?: number; block_time?: number };
+    };
+    const txs = (await txRes.json()) as Tx[];
+    return txs
+      .map((t) => {
+        const sats = t.vout.filter((o) => o.scriptpubkey_address === address).reduce((s, o) => s + o.value, 0);
+        return {
+          txid: t.txid,
+          amountBtc: sats / 1e8,
+          confirmations: t.status.confirmed && t.status.block_height ? Math.max(1, tip - t.status.block_height + 1) : 0,
+          time: t.status.block_time ?? null,
+        };
+      })
+      .filter((d) => d.amountBtc > 0);
+  });
