@@ -9,9 +9,10 @@ export const getBtcAddress = createServerFn({ method: "GET" })
     if (existing.data?.address) return { address: existing.data.address, configured: true };
 
     const xpub = process.env["BTC_XPUB"]?.trim();
-    if (!xpub) return { address: null, configured: false };
+    const seed = process.env["BTC_MASTER_SEED"]?.trim();
+    if (!xpub && !seed) return { address: null, configured: false };
 
-    const { deriveBtcAddress } = await import("./btc-derive.server");
+    const { deriveBtcAddress, deriveBtcAddressFromSeed } = await import("./btc-derive.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row, error } = await supabaseAdmin
       .from("btc_addresses")
@@ -21,7 +22,9 @@ export const getBtcAddress = createServerFn({ method: "GET" })
     if (error || !row) throw new Error("Could not create your Bitcoin address");
     if (row.address) return { address: row.address, configured: true };
 
-    const address = deriveBtcAddress(xpub, row.derivation_index);
+    const address = xpub
+      ? deriveBtcAddress(xpub, row.derivation_index)
+      : deriveBtcAddressFromSeed(seed!, row.derivation_index);
     await supabaseAdmin.from("btc_addresses").update({ address }).eq("user_id", userId);
     return { address, configured: true };
   });
