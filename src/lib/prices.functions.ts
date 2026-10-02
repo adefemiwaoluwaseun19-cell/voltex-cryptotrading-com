@@ -30,13 +30,39 @@ const compact = (n: number | undefined) => {
   return `$${Math.round(n).toLocaleString("en-US")}`;
 };
 
+// Coins priced directly by BitPay (https://bitpay.com/rates/{CODE}/USD).
+export const BITPAY_CODES: Record<string, string> = {
+  btc: "BTC",
+  eth: "ETH",
+  sol: "SOL",
+  xrp: "XRP",
+  doge: "DOGE",
+};
+
+export async function fetchBitpayPrice(coinId: string): Promise<number | null> {
+  const code = BITPAY_CODES[coinId];
+  if (!code) return null;
+  try {
+    const res = await fetch(`https://bitpay.com/rates/${code}/USD`, { headers: { accept: "application/json" } });
+    if (!res.ok) return null;
+    const json = (await res.json()) as { data?: { rate?: number } };
+    const rate = json.data?.rate;
+    return typeof rate === "number" && rate > 0 ? rate : null;
+  } catch {
+    return null;
+  }
+}
+
 export const getLiveQuotes = createServerFn({ method: "GET" }).handler(
   async (): Promise<LiveQuotes> => {
     const ids = Object.values(GECKO_IDS).join(",");
     const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true&include_market_cap=true&include_24hr_vol=true`;
-    const res = await fetch(url, { headers: { accept: "application/json" } });
-    if (!res.ok) throw new Error(`Price feed unavailable (${res.status})`);
-    const json = (await res.json()) as Record<
+    const [geckoRes, bitpayEntries] = await Promise.all([
+      fetch(url, { headers: { accept: "application/json" } }).catch(() => null),
+      Promise.all(Object.keys(BITPAY_CODES).map(async (id) => [id, await fetchBitpayPrice(id)] as const)),
+    ]);
+    const bitpay = Object.fromEntries(bitpayEntries) as Record<string, number | null>;
+    const json = (geckoRes && geckoRes.ok ? await geckoRes.json() : {}) as Record<
       string,
       { usd?: number; usd_24h_change?: number; usd_market_cap?: number; usd_24h_vol?: number }
     >;
@@ -44,14 +70,16 @@ export const getLiveQuotes = createServerFn({ method: "GET" }).handler(
     const out: LiveQuotes = {};
     for (const [localId, geckoId] of Object.entries(GECKO_IDS)) {
       const row = json[geckoId];
-      if (!row || typeof row.usd !== "number") continue;
+      const price = bitpay[localId] ?? row?.usd;
+      if (typeof price !== "number") continue;
       out[localId] = {
-        price: row.usd,
-        change: Number(row.usd_24h_change ?? 0),
-        cap: compact(row.usd_market_cap),
-        volume: compact(row.usd_24h_vol),
+        price,
+        change: Number(row?.usd_24h_change ?? 0),
+        cap: compact(row?.usd_market_cap),
+        volume: compact(row?.usd_24h_vol),
       };
     }
+    if (Object.keys(out).length === 0) throw new Error("Price feed unavailable");
     return out;
   },
 );

@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { GECKO_IDS } from "@/lib/prices.functions";
+import { GECKO_IDS, fetchBitpayPrice } from "@/lib/prices.functions";
 
 export type AccountHolding = { coinId: string; amount: number };
 
@@ -101,12 +101,15 @@ export const executeTrade = createServerFn({ method: "POST" })
     const geckoId = GECKO_IDS[data.coinId];
     if (!geckoId) throw new Error("Unknown asset");
 
-    // The price is fetched on the server so a caller can't tamper with it.
-    const url = `https://api.coingecko.com/api/v3/simple/price?ids=${geckoId}&vs_currencies=usd`;
-    const res = await fetch(url, { headers: { accept: "application/json" } });
-    if (!res.ok) throw new Error("Live price unavailable — please try again");
-    const json = (await res.json()) as Record<string, { usd?: number }>;
-    const price = json[geckoId]?.usd;
+    // The price is fetched on the server so a caller can't tamper with it. BitPay first.
+    let price = await fetchBitpayPrice(data.coinId);
+    if (price === null) {
+      const url = `https://api.coingecko.com/api/v3/simple/price?ids=${geckoId}&vs_currencies=usd`;
+      const res = await fetch(url, { headers: { accept: "application/json" } });
+      if (!res.ok) throw new Error("Live price unavailable — please try again");
+      const json = (await res.json()) as Record<string, { usd?: number }>;
+      price = json[geckoId]?.usd ?? null;
+    }
     if (typeof price !== "number" || price <= 0) throw new Error("Live price unavailable — please try again");
 
     const { data: result, error } = await context.supabase.rpc("execute_trade", {
