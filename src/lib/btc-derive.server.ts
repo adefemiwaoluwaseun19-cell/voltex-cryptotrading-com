@@ -19,3 +19,13 @@ export function deriveBtcAddress(extKey: string, index: number): string {
   if (!addr) throw new Error("Could not derive address");
   return addr;
 }
+
+// App-managed wallet: native SegWit (bc1) addresses at m/84'/0'/0'/0/index from the app's master seed.
+export function deriveBtcAddressFromSeed(seed: string, index: number): string {
+  const root = HDKey.fromMasterSeed(new TextEncoder().encode(seed));
+  const node = root.derive(`m/84'/0'/0'/0/${index}`);
+  if (!node.publicKey) throw new Error("Could not derive address");
+  const addr = p2wpkh(node.publicKey).address;
+  if (!addr) throw new Error("Could not derive address");
+  return addr;
+}
