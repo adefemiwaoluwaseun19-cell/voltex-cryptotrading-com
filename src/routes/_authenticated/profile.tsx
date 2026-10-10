@@ -182,6 +182,7 @@ function ProfilePage() {
       </section>
 
       <BtcAddressCard />
+      <BtcDepositsPanel />
 
       {groups.map((group) => (
         <section key={group.title} className="mt-5 px-5">
