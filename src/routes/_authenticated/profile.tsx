@@ -3,7 +3,56 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { Bitcoin, Check, Copy, LogOut } from "lucide-react";
-import { getBtcAddress } from "@/lib/wallet.functions";
+import { getBtcAddress, getBtcDeposits } from "@/lib/wallet.functions";
+
+function BtcDepositsPanel() {
+  const fetchDeposits = useServerFn(getBtcDeposits);
+  const { data, isLoading } = useQuery({
+    queryKey: ["btc-deposits"],
+    queryFn: () => fetchDeposits(),
+    refetchInterval: 60_000,
+  });
+  return (
+    <section className="mt-5 px-5">
+      <h2 className="mb-3 font-display text-base font-semibold">Bitcoin deposit activity</h2>
+      <div className="rounded-lg border border-border bg-surface p-3">
+        {isLoading ? (
+          <div className="space-y-2">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        ) : !data || data.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No incoming Bitcoin transactions detected yet. Deposits to your address appear here automatically.
+          </p>
+        ) : (
+          <ul className="stagger-list divide-y divide-border">
+            {data.map((d) => (
+              <li key={d.txid} className="flex items-center justify-between gap-3 py-2.5">
+                <div className="min-w-0">
+                  <p className="num truncate text-sm font-semibold">+{d.amountBtc.toFixed(8)} BTC</p>
+                  <p className="num truncate text-[11px] text-muted-foreground">{d.txid}</p>
+                </div>
+                <span
+                  className={
+                    d.confirmations >= 3
+                      ? "shrink-0 rounded-full bg-up/15 px-2 py-0.5 text-[10px] font-semibold text-up"
+                      : "shrink-0 rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-semibold text-accent"
+                  }
+                >
+                  {d.confirmations >= 3 ? "Confirmed" : `Pending · ${d.confirmations}/3`}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+        <p className="mt-2 text-[11px] text-muted-foreground">
+          Deposit activity is shown for tracking only and does not change your traded balances.
+        </p>
+      </div>
+    </section>
+  );
+}
 
 function BtcAddressCard() {
   const fetchAddr = useServerFn(getBtcAddress);
@@ -133,6 +182,7 @@ function ProfilePage() {
       </section>
 
       <BtcAddressCard />
+      <BtcDepositsPanel />
 
       {groups.map((group) => (
         <section key={group.title} className="mt-5 px-5">
