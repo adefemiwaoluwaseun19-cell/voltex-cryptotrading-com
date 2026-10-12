@@ -29,10 +29,18 @@ function BtcDepositsPanel() {
           <ul className="stagger-list divide-y divide-border">
             {data.map((d) => (
               <li key={d.txid} className="flex items-center justify-between gap-3 py-2.5">
-                <div className="min-w-0">
-                  <p className="num truncate text-sm font-semibold">+{d.amountBtc.toFixed(8)} BTC</p>
-                  <p className="num truncate text-[11px] text-muted-foreground">{d.txid}</p>
-                </div>
+                  <div className="min-w-0">
+                    <p className="num truncate text-sm font-semibold">+{d.amountBtc.toFixed(8)} BTC</p>
+                    <a
+                      href={`https://mempool.space/tx/${d.txid}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="num truncate text-[11px] text-muted-foreground underline decoration-border underline-offset-2 hover:text-accent"
+                      aria-label={`View transaction ${d.txid} on a public block explorer`}
+                    >
+                      {d.txid}
+                    </a>
+                  </div>
                 <span
                   className={
                     d.confirmations >= 3
