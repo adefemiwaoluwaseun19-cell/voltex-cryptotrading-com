@@ -158,6 +158,39 @@ export type Database = {
         }
         Relationships: []
       }
+      withdrawals: {
+        Row: {
+          address: string
+          coin_id: string
+          created_at: string
+          id: string
+          price_usd: number
+          status: string
+          units: number
+          user_id: string
+        }
+        Insert: {
+          address: string
+          coin_id: string
+          created_at?: string
+          id?: string
+          price_usd: number
+          status?: string
+          units: number
+          user_id: string
+        }
+        Update: {
+          address?: string
+          coin_id?: string
+          created_at?: string
+          id?: string
+          price_usd?: number
+          status?: string
+          units?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -171,6 +204,15 @@ export type Database = {
           _usd_amount: number
         }
         Returns: Json
+      }
+      request_withdrawal: {
+        Args: {
+          _address: string
+          _coin_id: string
+          _price_usd: number
+          _units: number
+        }
+        Returns: string
       }
     }
     Enums: {

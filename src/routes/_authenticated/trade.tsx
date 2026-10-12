@@ -6,13 +6,17 @@ import { CoinBadge } from "@/components/CoinBadge";
 import { formatPct, formatUsd } from "@/lib/market-data";
 import { useAccount, useExecuteTrade } from "@/lib/use-account";
 import { useLiveCoins } from "@/lib/use-live-prices";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { getWithdrawals, requestWithdrawal } from "@/lib/withdraw.functions";
+import { isValidAddress } from "@/lib/wallet-address";
 
-type Side = "buy" | "sell";
+type Side = "buy" | "sell" | "send";
 
 export const Route = createFileRoute("/_authenticated/trade")({
   validateSearch: (search: Record<string, unknown>): { coin: string; side: Side } => ({
     coin: typeof search["coin"] === "string" ? search["coin"] : "btc",
-    side: search["side"] === "sell" ? "sell" : "buy",
+    side: search["side"] === "sell" ? "sell" : search["side"] === "send" ? "send" : "buy",
   }),
   head: () => ({
     meta: [
@@ -40,6 +44,19 @@ function TradePage() {
   const { coins } = useLiveCoins();
   const { data: account, isLoading: accountLoading } = useAccount();
   const trade = useExecuteTrade();
+  const qc = useQueryClient();
+  const withdrawFn = useServerFn(requestWithdrawal);
+  const listFn = useServerFn(getWithdrawals);
+  const withdrawals = useQuery({ queryKey: ["withdrawals"], queryFn: () => listFn() });
+  const withdraw = useMutation({
+    mutationFn: (input: { coinId: string; usdAmount: number; address: string }) => withdrawFn({ data: input }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["account"] });
+      qc.invalidateQueries({ queryKey: ["transactions"] });
+      qc.invalidateQueries({ queryKey: ["withdrawals"] });
+    },
+  });
+  const [address, setAddress] = useState("");
 
   const coin = coins.find((c) => c.id === coinId) ?? coins[0]!;
   const [spend, setSpend] = useState("250");
@@ -47,21 +64,24 @@ function TradePage() {
   const [tradeError, setTradeError] = useState<string | null>(null);
 
   const usd = Number(spend) || 0;
-  const fee = usd * 0.004;
+  const isSend = side === "send";
+  const fee = isSend ? 0 : usd * 0.004;
   const units = usd / coin.price;
   const cash = account?.cashUsd ?? 0;
   const held = account?.holdings.find((h) => h.coinId === coin.id)?.amount ?? 0;
   const heldValue = held * coin.price;
   const buyTotal = usd + fee;
   const overCash = account !== undefined && side === "buy" && buyTotal > cash + 1e-9;
-  const overHeld = account !== undefined && side === "sell" && usd > heldValue + 1e-9;
-  const blocked = usd <= 0 || overCash || overHeld || trade.isPending;
+  const addressOk = isValidAddress(coin.id, address);
+  const badAddress = isSend && !addressOk;
+  const overHeld = account !== undefined && side !== "buy" && usd > heldValue + 1e-9;
+  const blocked = usd <= 0 || overCash || overHeld || badAddress || trade.isPending || withdraw.isPending;
 
   const setSide = (next: Side) =>
     navigate({ to: "/trade", search: { coin: coin.id, side: next }, replace: true });
 
   const setMax = () => {
-    if (side === "sell") {
+    if (side !== "buy") {
       setSpend((Math.floor(heldValue * 100) / 100).toFixed(2));
     } else {
       setSpend((Math.floor((cash / 1.004) * 100) / 100).toFixed(2));
@@ -72,6 +92,19 @@ function TradePage() {
     if (blocked) return;
     setPlaced(null);
     setTradeError(null);
+    if (side === "send") {
+      withdraw.mutate(
+        { coinId: coin.id, usdAmount: usd, address: address.trim() },
+        {
+          onSuccess: (r) => {
+            setPlaced(`Send request for ${r.units.toFixed(r.units < 1 ? 6 : 4)} ${coin.symbol} submitted — pending review`);
+            setAddress("");
+          },
+          onError: (e) => setTradeError(e.message),
+        },
+      );
+      return;
+    }
     trade.mutate(
       { coinId: coin.id, side, usdAmount: usd },
       {
@@ -90,14 +123,14 @@ function TradePage() {
 
       <div className="mt-5 px-5">
         <h1 className="font-display text-2xl font-semibold tracking-tight">
-          {side === "buy" ? "Buy" : "Sell"} crypto
+          {side === "buy" ? "Buy" : side === "sell" ? "Sell" : "Send"} crypto
         </h1>
         <p className="num mt-1 text-sm text-muted-foreground">
           {accountLoading ? "Loading cash…" : `Cash available · ${formatUsd(cash)}`}
         </p>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-1 rounded-lg bg-secondary p-1 mx-5">
+      <div className="mt-4 grid grid-cols-3 gap-1 rounded-lg bg-secondary p-1 mx-5">
         <button
           type="button"
           onClick={() => setSide("buy")}
@@ -115,6 +148,15 @@ function TradePage() {
           }`}
         >
           Sell
+        </button>
+        <button
+          type="button"
+          onClick={() => setSide("send")}
+          className={`pressable rounded-md py-2.5 text-sm font-semibold transition-all ${
+            side === "send" ? "bg-brand text-brand-foreground shadow-brand" : "text-muted-foreground"
+          }`}
+        >
+          Send
         </button>
       </div>
 
@@ -151,6 +193,29 @@ function TradePage() {
               </p>
             </div>
           </div>
+
+          {isSend && (
+            <div className="mt-4">
+              <label htmlFor="recipient" className="block text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
+                Recipient {coin.symbol} wallet address
+              </label>
+              <input
+                id="recipient"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder={`Paste a ${coin.symbol} address`}
+                autoComplete="off"
+                spellCheck={false}
+                className="mt-1 w-full rounded-xl border border-border bg-secondary px-3 py-3 font-mono text-xs outline-none"
+              />
+              {address.length > 0 && !addressOk && (
+                <p className="mt-1 text-[11px] text-down">This doesn't look like a valid {coin.symbol} address.</p>
+              )}
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Double-check the address. Crypto sent to the wrong address can't be recovered.
+              </p>
+            </div>
+          )}
 
           <div className="mt-4 flex items-center justify-between">
             <label className="block text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
@@ -190,24 +255,24 @@ function TradePage() {
 
           <dl className="mt-4 space-y-2 text-xs">
             <div className="flex items-center justify-between">
-              <dt className="text-muted-foreground">You {side === "buy" ? "receive" : "sell"}</dt>
+              <dt className="text-muted-foreground">You {side === "buy" ? "receive" : side === "sell" ? "sell" : "send"}</dt>
               <dd className="num font-semibold">
                 {units.toFixed(units < 1 ? 6 : 4)} {coin.symbol}
               </dd>
             </div>
             <div className="flex items-center justify-between">
-              <dt className="text-muted-foreground">Fee (0.40%)</dt>
+              <dt className="text-muted-foreground">{isSend ? "Fee" : "Fee (0.40%)"}</dt>
               <dd className="num font-semibold">{formatUsd(fee)}</dd>
             </div>
             <div className="flex items-center justify-between border-t border-border pt-2">
-              <dt className="text-muted-foreground">{side === "buy" ? "Total cost" : "You receive"}</dt>
+              <dt className="text-muted-foreground">{side === "buy" ? "Total cost" : side === "sell" ? "You receive" : "Value sent"}</dt>
               <dd className="num font-semibold">
                 {formatUsd(side === "buy" ? usd + fee : usd - fee)}
               </dd>
             </div>
           </dl>
 
-          {side === "sell" && (
+          {side !== "buy" && (
             <p className="num mt-2 text-[11px] text-muted-foreground">
               You hold {held} {coin.symbol}
             </p>
@@ -219,13 +284,15 @@ function TradePage() {
             onClick={confirm}
             className="action-button mt-4 h-12 w-full rounded-md bg-gradient-brand text-sm font-bold text-primary-foreground shadow-brand disabled:opacity-40"
           >
-            {trade.isPending
-              ? "Placing order…"
+            {trade.isPending || withdraw.isPending
+              ? "Submitting…"
               : overCash
                 ? "Not enough cash"
                 : overHeld
                   ? "Not enough holdings"
-                  : side === "buy"
+                  : isSend
+                    ? badAddress ? "Enter a valid address" : "Request send"
+                    : side === "buy"
                     ? "Confirm buy"
                     : "Confirm sell"}
           </button>
@@ -242,6 +309,25 @@ function TradePage() {
           )}
         </div>
       </section>
+
+      {isSend && (withdrawals.data?.length ?? 0) > 0 && (
+        <section className="mt-5 px-5 pb-6">
+          <h2 className="text-sm font-semibold">Recent send requests</h2>
+          <ul className="mt-2 space-y-2">
+            {withdrawals.data!.map((w) => (
+              <li key={w.id} className="rounded-lg border border-border bg-secondary p-3 text-xs">
+                <div className="flex justify-between">
+                  <span className="num font-semibold">{w.units.toFixed(6)} {w.coin_id.toUpperCase()}</span>
+                  <span className={w.status === "completed" ? "text-up" : w.status === "rejected" ? "text-down" : "text-accent"}>
+                    {w.status.charAt(0).toUpperCase() + w.status.slice(1)}
+                  </span>
+                </div>
+                <p className="mt-1 truncate font-mono text-[11px] text-muted-foreground">To {w.address}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </AppShell>
   );
 }
