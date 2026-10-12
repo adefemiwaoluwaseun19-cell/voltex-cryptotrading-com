@@ -55,7 +55,8 @@ function BtcDepositsPanel() {
           </ul>
         )}
         <p className="mt-2 text-[11px] text-muted-foreground">
-          Deposit activity is shown for tracking only and does not change your traded balances.
+          Tap a transaction ID to view it on the public Bitcoin block explorer. Deposit tracking is shown for
+          reference only and does not change your traded balances.
         </p>
       </div>
     </section>
