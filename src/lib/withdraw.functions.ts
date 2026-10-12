@@ -53,3 +53,33 @@ export const getWithdrawals = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     return (data ?? []).map((w) => ({ ...w, units: Number(w.units) }));
   });
+
+export type AdminWithdrawalRow = WithdrawalRow & { user_id: string; price_usd: number };
+
+export const getIsAdmin = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    return data === true;
+  });
+
+export const listAllWithdrawals = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<AdminWithdrawalRow[]> => {
+    const { data, error } = await context.supabase
+      .from("withdrawals")
+      .select("id, user_id, coin_id, units, price_usd, address, status, created_at")
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (error) throw new Error(error.message);
+    return (data ?? []).map((w) => ({ ...w, units: Number(w.units), price_usd: Number(w.price_usd) }));
+  });
+
+export const reviewWithdrawal = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ id: z.string().uuid(), approve: z.boolean() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase.rpc("review_withdrawal", { _id: data.id, _approve: data.approve });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
