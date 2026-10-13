@@ -1,4 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { getIsAdmin } from "@/lib/withdraw.functions";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
@@ -132,6 +133,8 @@ const groups = [
 
 function ProfilePage() {
   const navigate = useNavigate();
+  const isAdminFn = useServerFn(getIsAdmin);
+  const isAdmin = useQuery({ queryKey: ["is-admin"], queryFn: () => isAdminFn() });
   const queryClient = useQueryClient();
   const { data: account, holdingsMap, isLoading: accountLoading } = useAccount();
   const { total } = useLivePortfolio(holdingsMap);
@@ -155,6 +158,13 @@ function ProfilePage() {
   return (
     <AppShell>
       <AppHeader title="Profile" />
+      {isAdmin.data && (
+        <div className="mt-4 px-5">
+          <Link to="/admin" className="pressable block rounded-lg border border-accent bg-accent/10 px-4 py-3 text-sm font-semibold text-accent">
+            Review send requests →
+          </Link>
+        </div>
+      )}
 
       <section className="mt-5 px-5">
         <div className="animate-fade-in flex items-center gap-3 rounded-lg border border-border bg-gradient-card p-4">
