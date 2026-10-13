@@ -232,6 +232,7 @@ function ProfilePage() {
           Sign out
         </button>
       </section>
+      <CashoutPanel cash={account?.cashUsd ?? 0} />
     </AppShell>
   );
 }
