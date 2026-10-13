@@ -99,6 +99,7 @@ function BtcAddressCard() {
 }
 import { AppShell } from "@/components/AppShell";
 import { AppHeader } from "@/components/AppHeader";
+import { CashoutPanel } from "@/components/CashoutPanel";
 import { Skeleton } from "@/components/Placeholders";
 import { formatUsd } from "@/lib/market-data";
 import { useAccount } from "@/lib/use-account";
