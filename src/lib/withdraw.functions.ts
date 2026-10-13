@@ -3,83 +3,130 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { GECKO_IDS, fetchBitpayPrice } from "@/lib/prices.functions";
 import { isValidAddress } from "@/lib/wallet-address";
+import { transactionPinSchema, verifyTransactionPinForUser } from "@/lib/transaction-pin.functions";
 
-export type WithdrawalRow = {
+export type AccountHolding = { coinId: string; amount: number };
+
+export type AccountData = {
+  displayName: string;
+  avatarUrl: string | null;
+  email: string | null;
+  cashUsd: number;
+  holdings: AccountHolding[];
+};
+
+export const getAccount = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<AccountData> => {
+    const { supabase, userId, claims } = context;
+
+    const [profileRes, walletRes, holdingsRes] = await Promise.all([
+      supabase.from("profiles").select("display_name, avatar_url").eq("id", userId).single(),
+      supabase.from("wallets").select("cash_usd").eq("user_id", userId).single(),
+      supabase.from("holdings").select("coin_id, amount").eq("user_id", userId),
+    ]);
+
+    if (walletRes.error || !walletRes.data) {
+      const { data } = await supabase
+        .from("wallets")
+        .upsert({ user_id: userId, cash_usd: 10000 }, { onConflict: "user_id" })
+        .select("cash_usd")
+        .single();
+      if (!data) throw new Error("Could not load your account");
+      return {
+        displayName: profileRes.data?.display_name ?? "Trader",
+        avatarUrl: profileRes.data?.avatar_url ?? null,
+        email: typeof claims?.email === "string" ? claims.email : null,
+        cashUsd: Number(data.cash_usd),
+        holdings: [],
+      };
+    }
+
+    if (holdingsRes.error) throw new Error(holdingsRes.error.message);
+
+    return {
+      displayName: profileRes.data?.display_name ?? "Trader",
+      avatarUrl: profileRes.data?.avatar_url ?? null,
+      email: typeof claims?.email === "string" ? claims.email : null,
+      cashUsd: Number(walletRes.data.cash_usd),
+      holdings: (holdingsRes.data ?? []).map((h) => ({ coinId: h.coin_id, amount: Number(h.amount) })),
+    };
+  });
+
+export type TxRow = {
   id: string;
+  kind: "buy" | "sell";
   coin_id: string;
   units: number;
-  address: string;
-  status: string;
+  price_usd: number;
+  total_usd: number;
+  fee_usd: number;
   created_at: string;
 };
 
-export const requestWithdrawal = createServerFn({ method: "POST" })
+export const getTransactions = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<TxRow[]> => {
+    const { data, error } = await context.supabase
+      .from("transactions")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(25);
+    if (error) throw new Error(error.message);
+    return (data ?? []).map((t) => ({
+      id: t.id,
+      kind: t.kind as "buy" | "sell",
+      coin_id: t.coin_id,
+      units: Number(t.units),
+      price_usd: Number(t.price_usd),
+      total_usd: Number(t.total_usd),
+      fee_usd: Number(t.fee_usd),
+      created_at: t.created_at,
+    }));
+  });
+
+export type TradeResult = { units: number; total: number; fee: number; cash: number };
+
+export const executeTrade = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
     z
-      .object({ coinId: z.string(), usdAmount: z.number().positive(), address: z.string().trim().min(20).max(120) })
+      .object({
+        coinId: z.string(),
+        side: z.enum(["buy", "sell"]),
+        usdAmount: z.number().positive(),
+        pin: transactionPinSchema,
+      })
       .parse(input),
   )
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data, context }): Promise<TradeResult> => {
+    await verifyTransactionPinForUser(context.supabase, context.userId, data.pin);
+
     const geckoId = GECKO_IDS[data.coinId];
     if (!geckoId) throw new Error("Unknown asset");
-    if (!isValidAddress(data.coinId, data.address)) throw new Error("That wallet address doesn't look right for this coin");
 
     let price = await fetchBitpayPrice(data.coinId);
     if (price === null) {
-      const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${geckoId}&vs_currencies=usd`);
-      if (res.ok) price = ((await res.json()) as Record<string, { usd?: number }>)[geckoId]?.usd ?? null;
+      const url = `https://api.coingecko.com/api/v3/simple/price?ids=${geckoId}&vs_currencies=usd`;
+      const res = await fetch(url, { headers: { accept: "application/json" } });
+      if (!res.ok) throw new Error("Live price unavailable — please try again");
+      const json = (await res.json()) as Record<string, { usd?: number }>;
+      price = json[geckoId]?.usd ?? null;
     }
     if (typeof price !== "number" || price <= 0) throw new Error("Live price unavailable — please try again");
 
-    const { error } = await context.supabase.rpc("request_withdrawal", {
+    const { data: result, error } = await context.supabase.rpc("execute_trade", {
       _coin_id: data.coinId,
-      _units: data.usdAmount / price,
+      _side: data.side,
       _price_usd: price,
-      _address: data.address.trim(),
+      _usd_amount: data.usdAmount,
     });
     if (error) throw new Error(error.message);
-    return { units: data.usdAmount / price };
-  });
-
-export const getWithdrawals = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<WithdrawalRow[]> => {
-    const { data, error } = await context.supabase
-      .from("withdrawals")
-      .select("id, coin_id, units, address, status, created_at")
-      .order("created_at", { ascending: false })
-      .limit(10);
-    if (error) throw new Error(error.message);
-    return (data ?? []).map((w) => ({ ...w, units: Number(w.units) }));
-  });
-
-export type AdminWithdrawalRow = WithdrawalRow & { user_id: string; price_usd: number };
-
-export const getIsAdmin = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { data } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
-    return data === true;
-  });
-
-export const listAllWithdrawals = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<AdminWithdrawalRow[]> => {
-    const { data, error } = await context.supabase
-      .from("withdrawals")
-      .select("id, user_id, coin_id, units, price_usd, address, status, created_at")
-      .order("created_at", { ascending: false })
-      .limit(100);
-    if (error) throw new Error(error.message);
-    return (data ?? []).map((w) => ({ ...w, units: Number(w.units), price_usd: Number(w.price_usd) }));
-  });
-
-export const reviewWithdrawal = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ id: z.string().uuid(), approve: z.boolean() }).parse(input))
-  .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.rpc("review_withdrawal", { _id: data.id, _approve: data.approve });
-    if (error) throw new Error(error.message);
-    return { ok: true };
+    const r = result as { units: string | number; total: string | number; fee: string | number; cash: string | number };
+    return {
+      units: Number(r.units),
+      total: Number(r.total),
+      fee: Number(r.fee),
+      cash: Number(r.cash),
+    };
   });

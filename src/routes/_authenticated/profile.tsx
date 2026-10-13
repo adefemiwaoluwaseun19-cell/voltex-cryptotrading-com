@@ -1,238 +1,361 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { getIsAdmin } from "@/lib/withdraw.functions";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Bitcoin, Check, Copy, LogOut } from "lucide-react";
-import { getBtcAddress, getBtcDeposits } from "@/lib/wallet.functions";
-
-function BtcDepositsPanel() {
-  const fetchDeposits = useServerFn(getBtcDeposits);
-  const { data, isLoading } = useQuery({
-    queryKey: ["btc-deposits"],
-    queryFn: () => fetchDeposits(),
-    refetchInterval: 60_000,
-  });
-  return (
-    <section className="mt-5 px-5">
-      <h2 className="mb-3 font-display text-base font-semibold">Bitcoin deposit activity</h2>
-      <div className="rounded-lg border border-border bg-surface p-3">
-        {isLoading ? (
-          <div className="space-y-2">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-        ) : !data || data.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            No incoming Bitcoin transactions detected yet. Deposits to your address appear here automatically.
-          </p>
-        ) : (
-          <ul className="stagger-list divide-y divide-border">
-            {data.map((d) => (
-              <li key={d.txid} className="flex items-center justify-between gap-3 py-2.5">
-                  <div className="min-w-0">
-                    <p className="num truncate text-sm font-semibold">+{d.amountBtc.toFixed(8)} BTC</p>
-                    <a
-                      href={`https://mempool.space/tx/${d.txid}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="num truncate text-[11px] text-muted-foreground underline decoration-border underline-offset-2 hover:text-accent"
-                      aria-label={`View transaction ${d.txid} on a public block explorer`}
-                    >
-                      {d.txid}
-                    </a>
-                  </div>
-                <span
-                  className={
-                    d.confirmations >= 3
-                      ? "shrink-0 rounded-full bg-up/15 px-2 py-0.5 text-[10px] font-semibold text-up"
-                      : "shrink-0 rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-semibold text-accent"
-                  }
-                >
-                  {d.confirmations >= 3 ? "Confirmed" : `Pending · ${d.confirmations}/3`}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-        <p className="mt-2 text-[11px] text-muted-foreground">
-          Tap a transaction ID to view it on the public Bitcoin block explorer. Deposit tracking is shown for
-          reference only and does not change your traded balances.
-        </p>
-      </div>
-    </section>
-  );
-}
-
-function BtcAddressCard() {
-  const fetchAddr = useServerFn(getBtcAddress);
-  const { data, isLoading } = useQuery({ queryKey: ["btc-address"], queryFn: () => fetchAddr(), staleTime: Infinity });
-  const [copied, setCopied] = useState(false);
-  const copy = async () => {
-    if (!data?.address) return;
-    await navigator.clipboard.writeText(data.address);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  };
-  return (
-    <section className="mt-5 px-5">
-      <h2 className="mb-3 font-display text-base font-semibold">Your Bitcoin deposit address</h2>
-      <div className="rounded-lg border border-border bg-surface p-3">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Bitcoin className="size-4 text-accent" /> Send only BTC on the Bitcoin network
-        </div>
-        {isLoading ? (
-          <Skeleton className="mt-2 h-5 w-full" />
-        ) : data?.address ? (
-          <div className="mt-2 flex items-center gap-2">
-            <code className="num min-w-0 flex-1 break-all text-sm font-semibold">{data.address}</code>
-            <button type="button" onClick={copy} aria-label="Copy address" className="pressable rounded-md border border-border p-2 hover:border-brand">
-              {copied ? <Check className="size-4 text-up" /> : <Copy className="size-4" />}
-            </button>
-          </div>
-        ) : (
-          <p className="mt-2 text-sm text-muted-foreground">Bitcoin deposits are being set up. Check back soon.</p>
-        )}
-      </div>
-    </section>
-  );
-}
 import { AppShell } from "@/components/AppShell";
 import { AppHeader } from "@/components/AppHeader";
-import { CashoutPanel } from "@/components/CashoutPanel";
-import { Skeleton } from "@/components/Placeholders";
-import { formatUsd } from "@/lib/market-data";
-import { useAccount } from "@/lib/use-account";
-import { useLivePortfolio } from "@/lib/use-live-prices";
-import { supabase } from "@/integrations/supabase/client";
+import { CoinBadge } from "@/components/CoinBadge";
+import { formatPct, formatUsd } from "@/lib/market-data";
+import { useAccount, useExecuteTrade } from "@/lib/use-account";
+import { useLiveCoins } from "@/lib/use-live-prices";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { getWithdrawals, requestWithdrawal } from "@/lib/withdraw.functions";
+import { isValidAddress } from "@/lib/wallet-address";
 
-export const Route = createFileRoute("/_authenticated/profile")({
+type Side = "buy" | "sell" | "send";
+
+export const Route = createFileRoute("/_authenticated/trade")({
+  validateSearch: (search: Record<string, unknown>): { coin: string; side: Side } => ({
+    coin: typeof search["coin"] === "string" ? search["coin"] : "btc",
+    side: search["side"] === "sell" ? "sell" : search["side"] === "send" ? "send" : "buy",
+  }),
   head: () => ({
     meta: [
-      { title: "Account and security — Voltex" },
+      { title: "Buy and sell crypto — Voltex" },
       {
         name: "description",
-        content: "Manage your Voltex account: profile, balance, security and sign out.",
+        content:
+          "Place a buy or sell order in seconds: pick an asset, set the amount and review the total before you confirm.",
       },
-      { property: "og:title", content: "Account and security — Voltex" },
-      { property: "og:description", content: "Profile, balance, security settings and alerts." },
+      { property: "og:title", content: "Buy and sell crypto — Voltex" },
+      {
+        property: "og:description",
+        content: "Pick an asset, set an amount and review your total before confirming.",
+      },
     ],
   }),
-  component: ProfilePage,
+  component: TradePage,
 });
 
-const groups = [
-  {
-    title: "Preferences",
-    rows: ["Price alerts", "Display currency", "Notifications"],
-  },
-  {
-    title: "Security",
-    rows: ["Two-factor authentication", "Passkeys and devices", "Login history"],
-  },
-];
+const quickAmounts = [50, 100, 250, 500];
 
-function ProfilePage() {
+function TradePage() {
+  const { coin: coinId, side } = Route.useSearch();
   const navigate = useNavigate();
-  const isAdminFn = useServerFn(getIsAdmin);
-  const isAdmin = useQuery({ queryKey: ["is-admin"], queryFn: () => isAdminFn() });
-  const queryClient = useQueryClient();
-  const { data: account, holdingsMap, isLoading: accountLoading } = useAccount();
-  const { total } = useLivePortfolio(holdingsMap);
+  const { coins } = useLiveCoins();
+  const { data: account, isLoading: accountLoading } = useAccount();
+  const trade = useExecuteTrade();
+  const qc = useQueryClient();
+  const withdrawFn = useServerFn(requestWithdrawal);
+  const listFn = useServerFn(getWithdrawals);
+  const withdrawals = useQuery({ queryKey: ["withdrawals"], queryFn: () => listFn() });
+  const withdraw = useMutation({
+    mutationFn: (input: { coinId: string; usdAmount: number; address: string; pin: string }) =>
+      withdrawFn({ data: input }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["account"] });
+      qc.invalidateQueries({ queryKey: ["transactions"] });
+      qc.invalidateQueries({ queryKey: ["withdrawals"] });
+    },
+  });
+  const [address, setAddress] = useState("");
+  const [pin, setPin] = useState("");
 
-  const name = account?.displayName ?? "Trader";
-  const initials =
-    name
-      .split(/\s+/)
-      .map((p) => p[0]?.toUpperCase() ?? "")
-      .join("")
-      .slice(0, 2) || "V";
-  const grandTotal = (account?.cashUsd ?? 0) + total;
+  const coin = coins.find((c) => c.id === coinId) ?? coins[0]!;
+  const [spend, setSpend] = useState("250");
+  const [placed, setPlaced] = useState<string | null>(null);
+  const [tradeError, setTradeError] = useState<string | null>(null);
 
-  const handleSignOut = async () => {
-    await queryClient.cancelQueries();
-    queryClient.clear();
-    await supabase.auth.signOut();
-    navigate({ to: "/auth", replace: true });
+  const usd = Number(spend) || 0;
+  const isSend = side === "send";
+  const fee = isSend ? 0 : usd * 0.004;
+  const units = usd / coin.price;
+  const cash = account?.cashUsd ?? 0;
+  const held = account?.holdings.find((h) => h.coinId === coin.id)?.amount ?? 0;
+  const heldValue = held * coin.price;
+  const buyTotal = usd + fee;
+  const overCash = account !== undefined && side === "buy" && buyTotal > cash + 1e-9;
+  const addressOk = isValidAddress(coin.id, address);
+  const badAddress = isSend && !addressOk;
+  const overHeld = account !== undefined && side !== "buy" && usd > heldValue + 1e-9;
+  const pinOk = /^\d{6}$/.test(pin);
+  const blocked =
+    usd <= 0 || overCash || overHeld || badAddress || trade.isPending || withdraw.isPending || !pinOk;
+
+  const setSide = (next: Side) =>
+    navigate({ to: "/trade", search: { coin: coin.id, side: next }, replace: true });
+
+  const setMax = () => {
+    if (side !== "buy") {
+      setSpend((Math.floor(heldValue * 100) / 100).toFixed(2));
+    } else {
+      setSpend((Math.floor((cash / 1.004) * 100) / 100).toFixed(2));
+    }
+  };
+
+  const confirm = () => {
+    if (!pinOk) {
+      setTradeError("Enter your 6-digit transaction PIN.");
+      return;
+    }
+    if (blocked) return;
+    setPlaced(null);
+    setTradeError(null);
+    if (side === "send") {
+      withdraw.mutate(
+        { coinId: coin.id, usdAmount: usd, address: address.trim(), pin },
+        {
+          onSuccess: (r) => {
+            setPlaced(`Send request for ${r.units.toFixed(r.units < 1 ? 6 : 4)} ${coin.symbol} submitted — pending review`);
+            setAddress("");
+            setPin("");
+          },
+          onError: (e) => setTradeError(e.message),
+        },
+      );
+      return;
+    }
+    trade.mutate(
+      { coinId: coin.id, side, usdAmount: usd, pin },
+      {
+        onSuccess: (r) => {
+          setPlaced(
+            `${side === "buy" ? "Bought" : "Sold"} ${r.units.toFixed(r.units < 1 ? 6 : 4)} ${coin.symbol} — settled ${formatUsd(r.total)}`,
+          );
+          setPin("");
+        },
+        onError: (e) => setTradeError(e.message),
+      },
+    );
   };
 
   return (
     <AppShell>
-      <AppHeader title="Profile" />
-      {isAdmin.data && (
-        <div className="mt-4 px-5">
-          <Link to="/admin" className="pressable block rounded-lg border border-accent bg-accent/10 px-4 py-3 text-sm font-semibold text-accent">
-            Review send requests →
-          </Link>
-        </div>
-      )}
+      <AppHeader title="Trade" />
 
-      <section className="mt-5 px-5">
-        <div className="animate-fade-in flex items-center gap-3 rounded-lg border border-border bg-gradient-card p-4">
-          <div className="grid size-14 shrink-0 place-items-center rounded-full bg-gradient-to-br from-violet-500 to-accent text-base font-semibold ring-2 ring-border">
-            {initials}
-          </div>
-          <div className="min-w-0">
-            <h1 className="truncate font-display text-lg font-semibold leading-tight">{name}</h1>
-            <p className="truncate text-xs text-muted-foreground">{account?.email ?? "…"}</p>
-            <span className="mt-1.5 inline-flex rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-semibold text-accent">
-              Verified trading account
-            </span>
-          </div>
-        </div>
+      <div className="mt-5 px-5">
+        <h1 className="font-display text-2xl font-semibold tracking-tight">
+          {side === "buy" ? "Buy" : side === "sell" ? "Sell" : "Send"} crypto
+        </h1>
+        <p className="num mt-1 text-sm text-muted-foreground">
+          {accountLoading ? "Loading cash…" : `Cash available · ${formatUsd(cash)}`}
+        </p>
+      </div>
 
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          <div className="rounded-lg border border-border bg-surface p-3">
-            <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground">Total balance</p>
-            {accountLoading ? (
-              <Skeleton className="mt-1.5 h-5 w-24" />
-            ) : (
-              <p className="num mt-1 text-sm font-semibold">{formatUsd(grandTotal)}</p>
-            )}
-          </div>
-          <div className="rounded-lg border border-border bg-surface p-3">
-            <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground">Cash available</p>
-            {accountLoading ? (
-              <Skeleton className="mt-1.5 h-5 w-20" />
-            ) : (
-              <p className="num mt-1 text-sm font-semibold">{formatUsd(account?.cashUsd ?? 0)}</p>
-            )}
-          </div>
-        </div>
-      </section>
+      <div className="mt-4 grid grid-cols-3 gap-1 rounded-lg bg-secondary p-1 mx-5">
+        <button
+          type="button"
+          onClick={() => setSide("buy")}
+          className={`pressable rounded-md py-2.5 text-sm font-semibold transition-all ${
+            side === "buy" ? "bg-brand text-brand-foreground shadow-brand" : "text-muted-foreground"
+          }`}
+        >
+          Buy
+        </button>
+        <button
+          type="button"
+          onClick={() => setSide("sell")}
+          className={`pressable rounded-md py-2.5 text-sm font-semibold transition-all ${
+            side === "sell" ? "bg-brand text-brand-foreground shadow-brand" : "text-muted-foreground"
+          }`}
+        >
+          Sell
+        </button>
+        <button
+          type="button"
+          onClick={() => setSide("send")}
+          className={`pressable rounded-md py-2.5 text-sm font-semibold transition-all ${
+            side === "send" ? "bg-brand text-brand-foreground shadow-brand" : "text-muted-foreground"
+          }`}
+        >
+          Send
+        </button>
+      </div>
 
-      <BtcAddressCard />
-      <BtcDepositsPanel />
+      <div className="mt-4 flex gap-2 overflow-x-auto px-5 pb-1">
+        {coins.map((c) => (
+          <button
+            key={c.id}
+            type="button"
+            onClick={() => navigate({ to: "/trade", search: { coin: c.id, side }, replace: true })}
+            className={`pressable flex shrink-0 items-center gap-2 rounded-md border px-3 py-2 text-sm font-semibold ${
+              c.id === coin.id ? "border-accent bg-accent/10 text-accent" : "border-border bg-secondary"
+            }`}
+          >
+            <CoinBadge glyph={c.glyph} swatch={c.swatch} className="size-5 text-[9px]" />
+            {c.symbol}
+          </button>
+        ))}
+      </div>
 
-      {groups.map((group) => (
-        <section key={group.title} className="mt-5 px-5">
-          <h2 className="mb-3 font-display text-base font-semibold">{group.title}</h2>
-          <div className="stagger-list divide-y divide-border overflow-hidden rounded-lg border border-border bg-surface">
-            {group.rows.map((row) => (
+      <section className="mt-4 px-5">
+        <div className="rounded-lg border border-border bg-gradient-card p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CoinBadge glyph={coin.glyph} swatch={coin.swatch} className="size-7 text-[11px]" />
+              <div>
+                <p className="text-sm font-semibold leading-none">{coin.name}</p>
+                <p className="mt-1 text-[11px] text-muted-foreground">{coin.symbol} / USD</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="num text-sm font-semibold leading-none">{formatUsd(coin.price)}</p>
+              <p className={`num mt-1 text-[11px] ${coin.change >= 0 ? "text-up" : "text-down"}`}>
+                {formatPct(coin.change)}
+              </p>
+            </div>
+          </div>
+
+          {isSend && (
+            <div className="mt-4">
+              <label htmlFor="recipient" className="block text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
+                Recipient {coin.symbol} wallet address
+              </label>
+              <input
+                id="recipient"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder={`Paste a ${coin.symbol} address`}
+                autoComplete="off"
+                spellCheck={false}
+                className="mt-1 w-full rounded-xl border border-border bg-secondary px-3 py-3 font-mono text-xs outline-none"
+              />
+              {address.length > 0 && !addressOk && (
+                <p className="mt-1 text-[11px] text-down">This doesn't look like a valid {coin.symbol} address.</p>
+              )}
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Double-check the address. Crypto sent to the wrong address can't be recovered.
+              </p>
+            </div>
+          )}
+
+          <div className="mt-4 flex items-center justify-between">
+            <label className="block text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
+              Amount in USD
+            </label>
+            <button
+              type="button"
+              onClick={setMax}
+              className="pressable rounded bg-accent/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-accent"
+            >
+              Max
+            </button>
+          </div>
+          <div className="mt-1 flex items-center rounded-xl border border-border bg-secondary px-3">
+            <span className="text-sm text-muted-foreground">$</span>
+            <input
+              inputMode="decimal"
+              value={spend}
+              onChange={(e) => setSpend(e.target.value.replace(/[^0-9.]/g, ""))}
+              aria-label="Amount in USD"
+              className="num w-full bg-transparent px-2 py-3 font-display text-lg font-semibold outline-none"
+            />
+          </div>
+
+          <div className="mt-2 flex gap-2">
+            {quickAmounts.map((amount) => (
               <button
-                key={row}
+                key={amount}
                 type="button"
-                className="pressable flex w-full items-center justify-between px-3 py-3.5 text-left text-sm font-medium transition-colors hover:bg-secondary"
+                onClick={() => setSpend(String(amount))}
+                className="pressable num flex-1 rounded-md bg-secondary py-2 text-xs font-semibold text-secondary-foreground"
               >
-                {row}
-                <span className="text-muted-foreground">›</span>
+                ${amount}
               </button>
             ))}
           </div>
-        </section>
-      ))}
 
-      <section className="mt-5 px-5">
-        <button
-          type="button"
-          onClick={handleSignOut}
-          className="pressable flex w-full items-center justify-center gap-2 rounded-lg border border-down/40 bg-down/10 px-3 py-3.5 text-sm font-semibold text-down"
-        >
-          <LogOut className="size-4" strokeWidth={1.8} />
-          Sign out
-        </button>
+          <div className="mt-4">
+            <label htmlFor="transaction-pin" className="block text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
+              Transaction PIN
+            </label>
+            <input
+              id="transaction-pin"
+              type="password"
+              inputMode="numeric"
+              value={pin}
+              onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              autoComplete="one-time-code"
+              placeholder="Enter 6-digit PIN"
+              className="mt-1 w-full rounded-xl border border-border bg-secondary px-3 py-3 text-sm font-semibold outline-none"
+            />
+            {!pinOk && pin.length > 0 && <p className="mt-1 text-[11px] text-down">PIN must be exactly 6 digits.</p>}
+          </div>
+
+          <dl className="mt-4 space-y-2 text-xs">
+            <div className="flex items-center justify-between">
+              <dt className="text-muted-foreground">You {side === "buy" ? "receive" : side === "sell" ? "sell" : "send"}</dt>
+              <dd className="num font-semibold">
+                {units.toFixed(units < 1 ? 6 : 4)} {coin.symbol}
+              </dd>
+            </div>
+            <div className="flex items-center justify-between">
+              <dt className="text-muted-foreground">{isSend ? "Fee" : "Fee (0.40%)"}</dt>
+              <dd className="num font-semibold">{formatUsd(fee)}</dd>
+            </div>
+            <div className="flex items-center justify-between border-t border-border pt-2">
+              <dt className="text-muted-foreground">{side === "buy" ? "Total cost" : side === "sell" ? "You receive" : "Value sent"}</dt>
+              <dd className="num font-semibold">
+                {formatUsd(side === "buy" ? usd + fee : usd - fee)}
+              </dd>
+            </div>
+          </dl>
+
+          {side !== "buy" && (
+            <p className="num mt-2 text-[11px] text-muted-foreground">
+              You hold {held} {coin.symbol}
+            </p>
+          )}
+
+          <button
+            type="button"
+            disabled={blocked}
+            onClick={confirm}
+            className="action-button mt-4 h-12 w-full rounded-md bg-gradient-brand text-sm font-bold text-primary-foreground shadow-brand disabled:opacity-40"
+          >
+            {trade.isPending || withdraw.isPending
+              ? "Submitting…"
+              : overCash
+                ? "Not enough cash"
+                : overHeld
+                  ? "Not enough holdings"
+                  : isSend
+                    ? badAddress ? "Enter a valid address" : "Request send"
+                    : side === "buy"
+                      ? "Confirm buy"
+                      : "Confirm sell"}
+          </button>
+
+          {placed && (
+            <p className="animate-scale-in mt-3 rounded-md bg-up/15 px-3 py-2 text-center text-xs font-semibold text-up">
+              {placed}
+            </p>
+          )}
+          {tradeError && (
+            <p className="animate-scale-in mt-3 rounded-md bg-down/15 px-3 py-2 text-center text-xs font-semibold text-down">
+              {tradeError}
+            </p>
+          )}
+        </div>
       </section>
-      <CashoutPanel cash={account?.cashUsd ?? 0} />
+
+      {isSend && (withdrawals.data?.length ?? 0) > 0 && (
+        <section className="mt-5 px-5 pb-6">
+          <h2 className="text-sm font-semibold">Recent send requests</h2>
+          <ul className="mt-2 space-y-2">
+            {withdrawals.data!.map((w) => (
+              <li key={w.id} className="rounded-lg border border-border bg-secondary p-3 text-xs">
+                <div className="flex justify-between">
+                  <span className="num font-semibold">{w.units.toFixed(6)} {w.coin_id.toUpperCase()}</span>
+                  <span className={w.status === "completed" ? "text-up" : w.status === "rejected" ? "text-down" : "text-accent"}>
+                    {w.status.charAt(0).toUpperCase() + w.status.slice(1)}
+                  </span>
+                </div>
+                <p className="mt-1 truncate font-mono text-[11px] text-muted-foreground">To {w.address}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </AppShell>
   );
 }
