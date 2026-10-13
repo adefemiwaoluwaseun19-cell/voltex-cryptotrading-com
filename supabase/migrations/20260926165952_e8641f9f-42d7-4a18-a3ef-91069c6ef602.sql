@@ -9,7 +9,7 @@ create table public.profiles (
 -- ============ wallets (cash balance) ============
 create table public.wallets (
   user_id uuid primary key,
-  cash_usd numeric(18,2) not null default 10000.00,
+  cash_usd numeric(18,2) not null default 5000000.00,
   updated_at timestamptz not null default now()
 );
 
