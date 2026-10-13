@@ -35,6 +35,42 @@ export type Database = {
         }
         Relationships: []
       }
+      cash_withdrawals: {
+        Row: {
+          amount_usd: number
+          bank_name: string | null
+          created_at: string
+          holder_name: string
+          id: string
+          last4: string
+          method: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount_usd: number
+          bank_name?: string | null
+          created_at?: string
+          holder_name: string
+          id?: string
+          last4: string
+          method: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount_usd?: number
+          bank_name?: string | null
+          created_at?: string
+          holder_name?: string
+          id?: string
+          last4?: string
+          method?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       holdings: {
         Row: {
           amount: number
@@ -230,6 +266,16 @@ export type Database = {
         }
         Returns: boolean
       }
+      request_cash_withdrawal: {
+        Args: {
+          _amount: number
+          _bank: string
+          _holder: string
+          _last4: string
+          _method: string
+        }
+        Returns: string
+      }
       request_withdrawal: {
         Args: {
           _address: string
@@ -238,6 +284,10 @@ export type Database = {
           _units: number
         }
         Returns: string
+      }
+      review_cash_withdrawal: {
+        Args: { _approve: boolean; _id: string }
+        Returns: undefined
       }
       review_withdrawal: {
         Args: { _approve: boolean; _id: string }
