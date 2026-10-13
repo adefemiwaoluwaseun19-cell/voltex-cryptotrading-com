@@ -6,6 +6,51 @@ import { AppShell } from "@/components/AppShell";
 import { AppHeader } from "@/components/AppHeader";
 import { formatUsd } from "@/lib/market-data";
 import { getIsAdmin, listAllWithdrawals, reviewWithdrawal } from "@/lib/withdraw.functions";
+import { listAllCashouts, reviewCashout } from "@/lib/cashout.functions";
+
+function CashoutReview() {
+  const listFn = useServerFn(listAllCashouts);
+  const reviewFn = useServerFn(reviewCashout);
+  const qc = useQueryClient();
+  const [error, setError] = useState<string | null>(null);
+  const list = useQuery({ queryKey: ["all-cashouts"], queryFn: () => listFn() });
+  const review = useMutation({
+    mutationFn: (input: { id: string; approve: boolean }) => reviewFn({ data: input }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["all-cashouts"] }),
+    onError: (e: Error) => setError(e.message),
+  });
+  return (
+    <div className="mt-8">
+      <h2 className="font-display text-xl font-semibold tracking-tight">Card &amp; bank withdrawals</h2>
+      <p className="mt-1 text-sm text-muted-foreground">Pay the customer yourself, then mark as paid. Rejecting refunds their cash.</p>
+      {error && <p className="mt-3 rounded-md bg-down/15 px-3 py-2 text-xs text-down">{error}</p>}
+      {list.data?.length === 0 && <p className="mt-4 text-sm text-muted-foreground">No withdrawal requests yet.</p>}
+      <ul className="mt-4 space-y-3">
+        {list.data?.map((w) => (
+          <li key={w.id} className="rounded-lg border border-border bg-secondary p-4 text-xs">
+            <div className="flex items-center justify-between">
+              <span className="num text-sm font-semibold">{formatUsd(w.amount_usd)}</span>
+              <span className={w.status === "completed" ? "text-up" : w.status === "rejected" ? "text-down" : "text-accent"}>
+                {w.status.charAt(0).toUpperCase() + w.status.slice(1)}
+              </span>
+            </div>
+            <p className="mt-1 text-muted-foreground">
+              {w.holder_name} · {w.method === "card" ? "Card" : w.bank_name ?? "Bank"} •••• {w.last4} · {new Date(w.created_at).toLocaleString()}
+            </p>
+            {w.status === "pending" && (
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <button type="button" disabled={review.isPending} onClick={() => { setError(null); review.mutate({ id: w.id, approve: true }); }}
+                  className="pressable rounded-md bg-up/15 py-2 font-semibold text-up disabled:opacity-40">Mark as paid</button>
+                <button type="button" disabled={review.isPending} onClick={() => { setError(null); review.mutate({ id: w.id, approve: false }); }}
+                  className="pressable rounded-md bg-down/15 py-2 font-semibold text-down disabled:opacity-40">Reject &amp; refund</button>
+              </div>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -106,6 +151,7 @@ function AdminPage() {
                 </li>
               ))}
             </ul>
+            <CashoutReview />
           </>
         )}
       </div>
